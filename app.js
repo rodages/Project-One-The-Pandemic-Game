@@ -15,8 +15,9 @@ const barObject={
 }
 
 const state = {
-    pauses:1,
-    points:0,
+    highscore:null,
+    currentPoints: 0,
+    infected:0,
     virusFreePopulation:68429595,
     cheatcodes:["ienjoycheating","fairplayforall","iwantmyfreedom","doitfortheteam","iwantitovernow"],
     cheatCodeArr:[],
@@ -36,55 +37,43 @@ const strainsObj = {
         name:"ancestral",
         speed:1,
         damagePoints:10,
-        size:5,
-        splitting:"",
-        fading:"",
-        resistant:false,
+        size:1.5,
+        enhancements: ["ancestral"],
     },
     alpha :{
         name:"alpha",
-        speed:2,
+        speed:1.1,
         damagePoints:30,
-        size:4,
-        splitting:"split",
-        fading:"",
-        resistant:false,
+        size:1.4,
+        enhancements: ["alpha","split"],
     },
     beta :{
         name:"beta",
-        speed:3,
+        speed:1.2,
         damagePoints:30,
-        size:3,
-        splitting:"",
-        fading:"fade",
-        resistant:false,
+        size:1.3,
+        enhancements: [,"beta","fade"],
     },
     gamma :{
         name:"gamma",
-        speed:4,
+        speed:1.3,
         damagePoints:40,
-        size:2,
-        splitting:"",
-        fading:"",
-        resistant:true,
+        size:1.2,
+        enhancements: ["gamma","resistant"],
     },
     delta :{
         name:"delta",
-        speed:5,
+        speed:1.4,
         damagePoints:50,
-        size:2,
-        splitting:"split",
-        fading:"fade",
-        resistant:false,
+        size:1.1,
+        enhancements: ["delta","split","fade"],
     },
     omicron :{
         name:"omicron",
-        speed:6,
+        speed:1.5,
         damagePoints:60,
         size:1,
-        splitting:"split",
-        fading:"fade",
-        resistant:true,
+        enhancements: ["omicron","split","fade","resistant"],
     },
 }
 
@@ -112,51 +101,75 @@ document.addEventListener("keydown",(e)=>{
 })
 
 //ball for testing
-console.log(playArea)
-const ball = document.createElement("div");
-console.log(ball);
-ball.classList.add("ball");
-ball.style.width=parseInt(playArea.width/30)+"px";
-ball.style.height=playArea.width/30+"px";
-gameField.appendChild(ball);
 
-//needs to be in private execution context
-//height means where the ball/virus will be dropped from
 
-let height = 0;
-let first = setInterval(() => {
-    let barHeight = parseInt(window.getComputedStyle(bar).getPropertyValue("top"));
-    let ballHeight = parseInt(window.getComputedStyle(ball).getPropertyValue("height"));
-    let ballToBarCollisionPoint = parseInt(playArea.height-barHeight+ballHeight);
-    ball.style.top = height+"px";
-    // bar.style.width = `10px`
+const createBall = (strain) => {
+    if (strainsArr.includes(strain)) {
+        const ball = document.createElement("div")
+        console.log(strainsObj[strain].size)
+        const ballSize = parseInt(playArea.width / 30)*strainsObj[strain].size;
+        strainsObj[strain].enhancements.forEach(enhancement => ball.classList.add(enhancement));
+        ball.style.height = ballSize + "px"
+        ball.style.width = ballSize + "px"
+        ball.classList.add("ball");
+        console.log(ball);
+        gameField.appendChild(ball)
+        return ball
+    } else { console.log("something went wrong", strain) }
+    
+}
+console.log(createBall("ancestral"));
 
-    //drops the ball
-    if(height<gameField.scrollHeight-ballToBarCollisionPoint){
-        // console.log("did not hit")
-        // console.log(gameField.scrollHeight-ballToBarCollisionPoint)
-        // console.log(height);
-        // console.log(collisionCheck(ball,bar));
-        height++
-    }
-    //checks for collision and increases the score
-    else if(height==gameField.scrollHeight-ballToBarCollisionPoint){
+
+const dropBall = (strain) => {
+    // const ball = document.createElement("div");
+    // ball.classList.add("ball");
+    // ball.style.width=parseInt(playArea.width/30)+"px";
+    // ball.style.height=playArea.width/30+"px";
+    // gameField.appendChild(ball);
+    const ball = createBall(strain);
+    console.log(ball);
+    let start, previousTimeStamp;
+    const speed = 0.05 * strainsObj[strain].speed;
+
+
+    function step(timestamp) {
+        if (start === undefined) {
+            start = timestamp;
+        }
+        const elapsed = timestamp - start;
+
+        const height = elapsed * speed
+
+        let barHeight = parseInt(window.getComputedStyle(bar).getPropertyValue("top"));
+        let ballHeight = parseInt(window.getComputedStyle(ball).getPropertyValue("height"));
+        let ballToBarCollisionPoint = parseInt(playArea.height - barHeight + ballHeight);
+        const barCollisionPoint = gameField.scrollHeight-ballToBarCollisionPoint
+        ball.style.top = height + "px";
+        console.log(ball.style.top);
+        console.log(`height ${height}`)
+        console.log(`barCollisionPoint ${barCollisionPoint}`)
         
-        console.log("collision");
-        console.log(collisionCheck(ball,bar))
-        state.score++
-        console.log(state.points)
-        height++
-        //check for arrow up to collect points
-        //increase score
+        //checks for collision and increases the score
+        if(Math.abs(height-barCollisionPoint)<1){
+            
+            console.log("collision");
+            console.log(collisionCheck(ball,bar))
+            state.score++
+            console.log(state.points)
+            //check for arrow up to collect points
+            //increase score
+        }
+        //cancells interval, removes the ball from the screen
+        else if(height<barCollisionPoint){
+            window.requestAnimationFrame(step);
+        }
+        
     }
-    //cancells interval, removes the ball from the screen
-    else if(height>gameField.scrollHeight-ballToBarCollisionPoint){
-        console.log(height)
-        console.log(`finished`);
-        clearInterval(first);
-    }
-}, 1);
+    window.requestAnimationFrame(step)
+}
+dropBall("omicron")
+
 
 //check if the ball is in the range of the bar
 function collisionCheck (ball,bar){
@@ -173,10 +186,14 @@ function collisionCheck (ball,bar){
     return withinBar
 }
 
-//event listener to add pressed letter to cheatcode arr
-document.addEventListener("keydown",(e)=>{
-    addLetterToCheatCodeArr(e.code[e.code.length-1].toLowerCase())
-})
+//responsiveness if window size get changed during the game
+// {function resized() {
+//     bar.style.width = parseInt(document.querySelector(".game-field").clientWidth / 10) + "px";
+//     console.log(ball.width);
+//     ball.width = parseInt(document.querySelector(".game-field").clientWidth / 30) + "px";
+//     console.log(ball.width);
+//     window.onresize = resized}
+// }
 
 //NEEDTOREMOVECONSOLELOG
 //
@@ -192,6 +209,7 @@ function addLetterToCheatCodeArr(letter){
         console.log(state.cheatCodeArr.join(""))
         //checks if cheatcodecriteria has been met
         console.log(state.cheatcodes.includes(state.cheatCodeArr.join("")))
+        //function to execute cheatcode with switch statement
     }
     else{
         console.log("something went wrong")
@@ -199,3 +217,14 @@ function addLetterToCheatCodeArr(letter){
         console.log(state.cheatCodeArr)
     }
 }
+//event listener to add pressed letter to cheatcode arr
+document.addEventListener("keydown",(e)=>{
+    addLetterToCheatCodeArr(e.code[e.code.length-1].toLowerCase())
+})
+
+//adds list of cheatcodes
+state.cheatcodes.forEach(cheatCode=>{
+    const li = document.createElement("li")
+    li.textContent = cheatCode
+    document.querySelector(".cheat-codes").appendChild(li)
+})
