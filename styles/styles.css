@@ -14,26 +14,96 @@ h1{
     flex:3;
     height:100%;
     position:relative;
+    background: #870000;  /* fallback for old browsers */
+    background: -webkit-linear-gradient(to bottom, #190A05, #870000);  /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to bottom, #190A05, #870000); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
 }
 .game-info-display-field{
     border:1px solid blue;
     flex:1;
 }
 
+.bar{
+    width:50px;
+    background-color:#005EB9;
+    height:10px;
+    position:absolute;
+    top:90%;
+    font-family: Arial, sans-serif;
+}
+.collision-point{
+    box-sizing: border-box;
+    position:absolute;
+    border:1px solid greenyellow;
+    width:100%;
+    height:10px;
+    background-image:url('../crowd.png');
+}
+
+
 .ball{
     border-radius:50%;
     background-color:red;
     position:absolute;
     top:0px;
+    text-align: center;
+    font-size:1em;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    font-size:0.6em;
+    color:white;
+    border: 2px dashed #c31432;
+    /* width includes padding,margin and border */
+    box-sizing:border-box;
+    /* virus dots */
+    background-image:
+    radial-gradient(#c31432 20%, transparent 0),
+    radial-gradient(#c31432 20%, transparent 0);
+    background-size: 5px 5px;
+    background-position: 0 0, 100px 100px;
 }
 
-.bar{
-    width:50px;
-    background-color:blue;
-    height:10px;
-    position:absolute;
-    top:90%;
+
+.ancestral{
+    background-color: #F37335;  /* fallback for old browsers */
+    background-color: -webkit-linear-gradient(to top, #F37335, #FDC830);  /* Chrome 10-25, Safari 5.1-6 */
+    background-color: linear-gradient(to top, #F37335, #FDC830); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
 }
+
+.alpha{
+    background-color: #5A3F37;  /* fallback for old browsers */
+    background-color: -webkit-linear-gradient(to top, #2C7744, #5A3F37);  /* Chrome 10-25, Safari 5.1-6 */
+    background-color: linear-gradient(to top, #2C7744, #5A3F37); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+
+.beta{
+    background-color: #f953c6;  /* fallback for old browsers */
+    background-color: -webkit-linear-gradient(to top, #b91d73, #f953c6);  /* Chrome 10-25, Safari 5.1-6 */
+    background-color: linear-gradient(to top, #b91d73, #f953c6); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+
+.gamma{
+    background-color: #215f00;  /* fallback for old browsers */
+    background-color: -webkit-linear-gradient(to bottom, #e4e4d9, #215f00);  /* Chrome 10-25, Safari 5.1-6 */
+    background-color: linear-gradient(to bottom, #e4e4d9, #215f00); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+
+.delta{
+    background-color: #99f2c8;  /* fallback for old browsers */
+    background-color: -webkit-linear-gradient(to bottom, #99f2c8, #1f4037);  /* Chrome 10-25, Safari 5.1-6 */
+    background-color: linear-gradient(to bottom, #99f2c8, #1f4037); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
+
+}
+
+.omicron{
+    background-color: #12c2e9;  /* fallback for old browsers */
+    background-color: -webkit-linear-gradient(to bottom, #f64f59, #c471ed, #12c2e9);  /* Chrome 10-25, Safari 5.1-6 */
+    background-color: linear-gradient(to bottom, #f64f59, #c471ed, #12c2e9); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+
+
 html,body {
     height:100%;
 }
