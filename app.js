@@ -6,7 +6,8 @@ const infoField = document.querySelector(".game-info-display-field");
 
 const playArea = {
     height:gameField.scrollHeight,
-    width:gameField.scrollWidth,
+    width: gameField.scrollWidth,
+    collisionPoint:parseInt(gameField.scrollHeight/100*90)
 }
 //bar parameters
 const barObject={
@@ -42,35 +43,35 @@ const strainsObj = {
     },
     alpha :{
         name:"alpha",
-        speed:1.1,
+        speed:1.5,
         damagePoints:30,
         size:1.4,
         enhancements: ["alpha","split"],
     },
     beta :{
         name:"beta",
-        speed:1.2,
+        speed:1.7,
         damagePoints:30,
         size:1.3,
         enhancements: [,"beta","fade"],
     },
     gamma :{
         name:"gamma",
-        speed:1.3,
+        speed:1.9,
         damagePoints:40,
         size:1.2,
         enhancements: ["gamma","resistant"],
     },
     delta :{
         name:"delta",
-        speed:1.4,
+        speed:2.5,
         damagePoints:50,
         size:1.1,
         enhancements: ["delta","split","fade"],
     },
     omicron :{
         name:"omicron",
-        speed:1.5,
+        speed:3,
         damagePoints:60,
         size:1,
         enhancements: ["omicron","split","fade","resistant"],
@@ -79,12 +80,20 @@ const strainsObj = {
 
 //bar
 const bar = document.createElement("div");
+const crowdLevel = document.createElement("div");
+
 bar.classList.add("bar");
-bar.style.width=parseInt(barObject.width)+"px";
-bar.style.left=barObject.left
-bar.style.top=parseInt(playArea.height/100*90)+"px"
+crowdLevel.classList.add("collision-point");
+
+bar.style.width = parseInt(barObject.width) + "px";
+//centers initial bar
+bar.style.left = barObject.left
+
+bar.style.top = playArea.collisionPoint + "px"
+crowdLevel.style.top = playArea.collisionPoint + "px";
 // bar.style.left=100+"px"
 gameField.appendChild(bar);
+gameField.appendChild(crowdLevel)
 
 //bar controlls
 document.addEventListener("keydown",(e)=>{
@@ -101,7 +110,16 @@ document.addEventListener("keydown",(e)=>{
 })
 
 //ball for testing
-
+function ballsLocation(area, ballsWidth) {
+    const location = Math.floor(Math.random() * playArea.width) + 1
+    console.log(location, `location`)
+    console.log(area, `area`)
+    console.log(ballsWidth,`ballswidth`)
+    if (location + ballsWidth > area) {
+        return location - ballsWidth
+    }
+    return location
+}
 
 const createBall = (strain) => {
     if (strainsArr.includes(strain)) {
@@ -112,13 +130,14 @@ const createBall = (strain) => {
         ball.style.height = ballSize + "px"
         ball.style.width = ballSize + "px"
         ball.classList.add("ball");
+        ball.style.left = ballsLocation(playArea.width, ballSize) + "px"
+        // ball.innerText=strainsObj[strain].name
         console.log(ball);
         gameField.appendChild(ball)
         return ball
     } else { console.log("something went wrong", strain) }
     
 }
-console.log(createBall("ancestral"));
 
 
 const dropBall = (strain) => {
@@ -128,7 +147,6 @@ const dropBall = (strain) => {
     // ball.style.height=playArea.width/30+"px";
     // gameField.appendChild(ball);
     const ball = createBall(strain);
-    console.log(ball);
     let start, previousTimeStamp;
     const speed = 0.05 * strainsObj[strain].speed;
 
@@ -146,9 +164,9 @@ const dropBall = (strain) => {
         let ballToBarCollisionPoint = parseInt(playArea.height - barHeight + ballHeight);
         const barCollisionPoint = gameField.scrollHeight-ballToBarCollisionPoint
         ball.style.top = height + "px";
-        console.log(ball.style.top);
-        console.log(`height ${height}`)
-        console.log(`barCollisionPoint ${barCollisionPoint}`)
+        // console.log(ball.style.top);
+        // console.log(`height ${height}`)
+        // console.log(`barCollisionPoint ${barCollisionPoint}`)
         
         //checks for collision and increases the score
         if(Math.abs(height-barCollisionPoint)<1){
@@ -168,7 +186,13 @@ const dropBall = (strain) => {
     }
     window.requestAnimationFrame(step)
 }
+dropBall("ancestral")
+dropBall("alpha")
+dropBall("beta")
+dropBall("gamma")
+dropBall("delta")
 dropBall("omicron")
+
 
 
 //check if the ball is in the range of the bar
