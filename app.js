@@ -11,27 +11,9 @@ const playArea = {
 }
 //bar parameters
 const barObject={
-    width:playArea.width/10+"px",
+    width: playArea.width / 5 + "px",
     left:playArea.width/2-(playArea.width/20)+"px",
 }
-
-const state = {
-    highscore:null,
-    currentPoints: 0,
-    infected:0,
-    virusFreePopulation:68429595,
-    cheatcodes:["ienjoycheating","fairplayforall","iwantmyfreedom","doitfortheteam","iwantitovernow"],
-    cheatCodeArr:[],
-    mask:false,
-    lockdown:false,
-    single:false,
-    double:false,
-    booster:false,
-}
-
-const strainsArr = ["ancestral", "alpha", "beta", "gamma", "delta", "omicron"]
-const helpersArr = ["mask","vaccine","lockdown",]
-
 
 const strainsObj = {
     ancestral:{
@@ -77,6 +59,67 @@ const strainsObj = {
         enhancements: ["omicron","split","fade","resistant"],
     },
 }
+const strainsArr = ["ancestral", "alpha", "beta", "gamma", "delta", "omicron",]
+const powerUpsArr = ["mask","lockdown", "vaccine"]
+
+const state = {
+    highscore:null,
+    currentPoints: 0,
+    infected:0,
+    virusFreePopulation:68429595,
+    cheatcodes:["ienjoycheating","fairplayforall","iwantmyfreedom","doitfortheteam","iwantitovernow"],
+    cheatCodeArr: [],
+    currentStrains: ["ancestral",],
+    currentPowerUps: [],
+    maxJabs: 0,
+    intensity:1,
+    mask:false,
+    lockdown:false,
+    single:false,
+    double:false,
+    booster:false,
+}
+function setGameParameters(state) {
+    //max settings reached
+    if (maxJabs === 3) {
+        console.log(`max settings reached`);
+        return
+    }
+    //set max settings -> booster
+    if (state.currentPoints > 11000) {
+        state.currentPowerUps = [...powerUpsArr];
+        maxJabs = 3;
+        console.log(`max settings,booster`)
+        console.log(state)
+        return
+    
+    }
+    //enable omicron
+    else if (state.currentPoints > 10000) {
+        state.currentStrains = [...strainsArr]
+        console.log(`omicron enabled`)
+        console.log(state);
+        return
+    }
+    //enable double
+    else if (state.currentPoints > 9000) {
+        state.maxJabs = 2;
+        console.log(`2jabs`);
+        return
+    }
+    // enable delta
+    else if (state.currentPoints > 8000) {
+        state.currentStrains = [...strainsArr.slice(0, 5)]
+        console.log(`delta enabled`)
+        return
+    }
+    //
+    console.log(`nothing happened`);
+}
+
+
+
+
 
 //bar
 const bar = document.createElement("div");
@@ -91,7 +134,8 @@ bar.style.left = barObject.left
 
 bar.style.top = playArea.collisionPoint + "px"
 crowdLevel.style.top = playArea.collisionPoint + "px";
-// bar.style.left=100+"px"
+bar.innerText = "NHS"
+
 gameField.appendChild(bar);
 gameField.appendChild(crowdLevel)
 
@@ -226,13 +270,13 @@ function addLetterToCheatCodeArr(letter){
     if(state.cheatCodeArr.length<14){
         //adds letter to the array
         state.cheatCodeArr=[...state.cheatCodeArr,letter]
-        console.log(state.cheatCodeArr.join(""))
+        // console.log(state.cheatCodeArr.join(""))
     }else if(state.cheatCodeArr.length==14){
         //discards first letter, adds current letter to cheatcode array
         state.cheatCodeArr = [...state.cheatCodeArr.slice(1),letter]
-        console.log(state.cheatCodeArr.join(""))
+        // console.log(state.cheatCodeArr.join(""))
         //checks if cheatcodecriteria has been met
-        console.log(state.cheatcodes.includes(state.cheatCodeArr.join("")))
+        // console.log(state.cheatcodes.includes(state.cheatCodeArr.join("")))
         //function to execute cheatcode with switch statement
     }
     else{
@@ -252,3 +296,5 @@ state.cheatcodes.forEach(cheatCode=>{
     li.textContent = cheatCode
     document.querySelector(".cheat-codes").appendChild(li)
 })
+//will adjust the NHS to fit the bar div
+textFit(document.querySelector(".bar"), { widthOnly: true, })
