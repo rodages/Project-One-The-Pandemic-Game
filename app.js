@@ -3,17 +3,31 @@ const gameField = document.querySelector(".game-field");
 //div with stats/parameters and info
 const infoField = document.querySelector(".game-info-display-field");
 //playing area parameters
+const domPowerUpList = document.querySelector(".power-up-list");
+const domStrainsList = document.querySelector(".strains-list");
+const domJabsList = document.querySelector(".jabs-list");
 
 const playArea = {
     height:gameField.scrollHeight,
     width: gameField.scrollWidth,
+    //"px" needs to be added when used
     collisionPoint:parseInt(gameField.scrollHeight/100*90)
 }
 //bar parameters
-const barObject={
-    width: playArea.width / 5 + "px",
-    left:playArea.width/2-(playArea.width/20)+"px",
+const barObject = {
+    //when used "px" needs to be added
+    width: playArea.width / 5,
+    left:playArea.width/2-(playArea.width/20),
 }
+let bar = initiateBar()
+let crowdLevel = initiateCrowd()
+
+function startGame() {
+    initiatePlayArea();
+    initiateBar();
+    initiateCrowd();
+}
+startGame()
 
 const strainsObj = {
     ancestral:{
@@ -26,7 +40,7 @@ const strainsObj = {
     alpha :{
         name:"alpha",
         speed:1.5,
-        damagePoints:30,
+        damagePoints:20,
         size:1.4,
         enhancements: ["alpha","split"],
     },
@@ -59,8 +73,43 @@ const strainsObj = {
         enhancements: ["omicron","split","fade","resistant"],
     },
 }
-const strainsArr = ["ancestral", "alpha", "beta", "gamma", "delta", "omicron",]
-const powerUpsArr = ["mask","lockdown", "vaccine"]
+const strainsArr = ["ancestral", "alpha", "beta", "gamma", "delta", "omicron"]
+const powerUpsArr = ["mask", "lockdown", "vaccine"]
+
+//takes string of strain, returns state.intensity
+function updateIntensity(strain, state) {
+    const stateObj = { ...state }
+    let reducer = 1
+        if (state.mask){
+        reducer = 5
+    }
+    if (stateObj.lockdown) {
+        reducer *=5
+    }
+
+    if (state.booster) {
+        reducer = Math.max(reducer*2,30)
+    } else if (state.double) {
+        reducer +=10
+    } else if (state.single) {
+        reducer +=5
+    }
+    if (reducer == 1) {
+        reducer=0
+    } else if (reducer > 100) {
+        reducer = 120
+    }
+    if (strainsArr.includes(strain)) {
+        if (strain === "omicron" || strain === "gamma") {
+            stateObj.intensity =stateObj.intensity- strainsObj[strain].damagePoints
+        } else {
+            stateObj.intensity =stateObj.intensity- strainsObj[strain].damagePoints+reducer
+        }
+        console.log(stateObj.intensity)
+    } else { console.log("something went wrong", strain) }
+    return stateObj.intensity
+}
+
 
 const state = {
     highscore:null,
@@ -69,96 +118,150 @@ const state = {
     virusFreePopulation:68429595,
     cheatcodes:["ienjoycheating","fairplayforall","iwantmyfreedom","doitfortheteam","iwantitovernow"],
     cheatCodeArr: [],
-    currentStrains: ["ancestral",],
+    currentStrains: ["ancestral"],
     currentPowerUps: [],
     maxJabs: 0,
-    intensity:1,
+    intensity:1000,
     mask:false,
     lockdown:false,
     single:false,
     double:false,
     booster:false,
 }
-function setGameParameters(state) {
-    //max settings reached
-    if (maxJabs === 3) {
-        console.log(`max settings reached`);
-        return
+
+function updateGameParameters(stateObj) {
+    stateObj.currentStrains = setStrains(stateObj)
+    stateObj.currentPowerUps = setPowerUps(stateObj)
+    stateObj.maxJabs = setJabs(stateObj)
+}
+function setPowerUps(state) {
+    const stateObj = {...state}
+    const maskPoints = 2000
+    const lockdownPoints = 3000
+    const vaccinePoints = 6000
+    // if (stateObj.currentPowerUps.length === 3) {
+    //     console.log(`all powerups enabled`)
+    //     console.log(stateObj)
+    // }
+    //vaccine
+    if (stateObj.currentPoints >= vaccinePoints) {
+        stateObj.currentPowerUps = [...powerUpsArr]
+        console.log(`all powerups enabled`)
+        console.log(stateObj.currentPowerUps)
     }
-    //set max settings -> booster
-    if (state.currentPoints > 11000) {
-        state.currentPowerUps = [...powerUpsArr];
-        maxJabs = 3;
-        console.log(`max settings,booster`)
-        console.log(state)
-        return
-    
+    //lockdown
+    else if (stateObj.currentPoints >= lockdownPoints) {
+        stateObj.currentPowerUps = [...powerUpsArr.slice(0, 2)]
+        console.log(`lockdowns enabled`);
+        console.log(stateObj.currentPowerUps)
+    } else if (stateObj.currentPoints >= maskPoints) {
+        stateObj.currentPowerUps = [...powerUpsArr.slice(0, 1)]
+        console.log(`masks enabled`);
+        console.log(stateObj.currentPowerUps)
+    } else {
+        console.log(`too little points or something went wrong`)
+        console.log(stateObj)
     }
-    //enable omicron
-    else if (state.currentPoints > 10000) {
-        state.currentStrains = [...strainsArr]
+    createLis(domPowerUpList,stateObj.currentPowerUps,)
+    return stateObj.currentPowerUps
+}
+function setJabs(state) {
+    const stateObj = {...state}
+    const singleJabPoints = 6000;
+    const doubleJabPoints = 9000;
+    const boosterJabPoints = 11000;
+    //booster treshold
+    if (stateObj.currentPoints >= boosterJabPoints) {
+        stateObj.maxJabs = 3;
+        console.log(`booster jab available`)
+        console.log(stateObj)
+    }
+    //double
+    else if (stateObj.currentPoints >= doubleJabPoints) {
+        stateObj.maxJabs = 2;
+        console.log(`double jab available`)
+        console.log(stateObj)
+    }
+    //single 
+    else if (stateObj.currentPoints >= singleJabPoints) {
+        stateObj.maxJabs = 1;
+        console.log(`single jab available`)
+        console.log(stateObj)
+        
+
+    } else {
+        console.log(`too little points or something went wrong`)
+        console.log(stateObj)
+    }
+    return stateObj.maxJabs
+}
+function setStrains(state) {
+    const stateObj = { ...state }
+    const alphaPoints = 4000;
+    const betaPoints = 5000;
+    const gammaPoints = 7000;
+    const deltaPoints = 8000;
+    const omicronPoints = 10000;
+    //omicron
+    if (stateObj.currentPoints >= omicronPoints) {
+        stateObj.currentStrains = [...strainsArr]
+        console.log(stateObj.currentStrains, `currentStrains`)
         console.log(`omicron enabled`)
-        console.log(state);
-        return
     }
-    //enable double
-    else if (state.currentPoints > 9000) {
-        state.maxJabs = 2;
-        console.log(`2jabs`);
-        return
-    }
-    // enable delta
-    else if (state.currentPoints > 8000) {
-        state.currentStrains = [...strainsArr.slice(0, 5)]
+    // delta
+    else if (stateObj.currentPoints >= deltaPoints) {
+        stateObj.currentStrains = [...strainsArr.slice(0, 5)]
+        console.log(stateObj.currentStrains, `currentStrains`)
         console.log(`delta enabled`)
-        return
     }
-    //
-    console.log(`nothing happened`);
+    // gamma
+    else if (stateObj.currentPoints >= gammaPoints) {
+        stateObj.currentStrains = [...strainsArr.slice(0, 4)]
+        console.log(stateObj.currentStrains, `currentStrains`)
+        console.log(`gamma enabled`)
+    }
+    // beta
+    else if (stateObj.currentPoints >= betaPoints) {
+        stateObj.currentStrains = [...strainsArr.slice(0, 3)]
+        console.log(stateObj.currentStrains, `currentStrains`)
+        console.log(`beta enabled`)
+    }
+    //alpha
+    else if (stateObj.currentPoints >= alphaPoints) {
+        stateObj.currentStrains = [...strainsArr.slice(0, 2)]
+        console.log(stateObj.currentStrains, `currentStrains`)
+        console.log(`alpha enabled`)
+    } else {
+        console.log(`too little points or something went wrong`)
+        console.log(stateObj)
+    }
+    createLis(domStrainsList,stateObj.currentStrains,)
+    return stateObj.currentStrains
+}
+
+function createLis(parentElement, powerupType) {
+    if (parentElement.children.length !== powerupType.length) {
+        powerupType.forEach(item => {
+            if (!parentElement.querySelector(`.${item}`)) {
+                const li = document.createElement("li")
+                li.innerText = item[0].toUpperCase()+item.slice(1)
+                li.classList.add(item);
+                parentElement.appendChild(li)
+            }
+        })
+    }
 }
 
 
 
 
 
-//bar
-const bar = document.createElement("div");
-const crowdLevel = document.createElement("div");
-
-bar.classList.add("bar");
-crowdLevel.classList.add("collision-point");
-
-bar.style.width = parseInt(barObject.width) + "px";
-//centers initial bar
-bar.style.left = barObject.left
-
-bar.style.top = playArea.collisionPoint + "px"
-crowdLevel.style.top = playArea.collisionPoint + "px";
-bar.innerText = "NHS"
-
-gameField.appendChild(bar);
-gameField.appendChild(crowdLevel)
-
-//bar controlls
-document.addEventListener("keydown",(e)=>{
-    if(e.code==="ArrowLeft"){
-        if(parseFloat(bar.style.left)>gameField.clientLeft){
-            bar.style.left=parseFloat(bar.style.left)-(playArea.width/100)+"px"
-        }
-    }
-    else if(e.code==="ArrowRight"){
-        if(parseFloat(bar.style.left)+(bar.offsetWidth*1.25)<gameField.clientWidth){
-            bar.style.left=parseFloat(bar.style.left)+(playArea.width/100)+"px"
-        }
-    }
-})
-
 //ball for testing
 function ballsLocation(area, ballsWidth) {
     const location = Math.floor(Math.random() * playArea.width) + 1
-    console.log(location, `location`)
-    console.log(area, `area`)
-    console.log(ballsWidth,`ballswidth`)
+    // console.log(location, `location`)
+    // console.log(area, `area`)
+    // console.log(ballsWidth,`ballswidth`)
     if (location + ballsWidth > area) {
         return location - ballsWidth
     }
@@ -168,7 +271,7 @@ function ballsLocation(area, ballsWidth) {
 const createBall = (strain) => {
     if (strainsArr.includes(strain)) {
         const ball = document.createElement("div")
-        console.log(strainsObj[strain].size)
+        // console.log(strainsObj[strain].size)
         const ballSize = parseInt(playArea.width / 30)*strainsObj[strain].size;
         strainsObj[strain].enhancements.forEach(enhancement => ball.classList.add(enhancement));
         ball.style.height = ballSize + "px"
@@ -176,7 +279,7 @@ const createBall = (strain) => {
         ball.classList.add("ball");
         ball.style.left = ballsLocation(playArea.width, ballSize) + "px"
         // ball.innerText=strainsObj[strain].name
-        console.log(ball);
+        // console.log(ball);
         gameField.appendChild(ball)
         return ball
     } else { console.log("something went wrong", strain) }
@@ -185,14 +288,10 @@ const createBall = (strain) => {
 
 
 const dropBall = (strain) => {
-    // const ball = document.createElement("div");
-    // ball.classList.add("ball");
-    // ball.style.width=parseInt(playArea.width/30)+"px";
-    // ball.style.height=playArea.width/30+"px";
-    // gameField.appendChild(ball);
     const ball = createBall(strain);
     let start, previousTimeStamp;
-    const speed = 0.05 * strainsObj[strain].speed;
+    const speed = parseFloat(0.05 * strainsObj[strain].speed).toFixed(4);
+    console.log(speed);
 
 
     function step(timestamp) {
@@ -203,10 +302,20 @@ const dropBall = (strain) => {
 
         const height = elapsed * speed
 
-        let barHeight = parseInt(window.getComputedStyle(bar).getPropertyValue("top"));
-        let ballHeight = parseInt(window.getComputedStyle(ball).getPropertyValue("height"));
-        let ballToBarCollisionPoint = parseInt(playArea.height - barHeight + ballHeight);
-        const barCollisionPoint = gameField.scrollHeight-ballToBarCollisionPoint
+        // let barHeight = parseInt(window.getComputedStyle(bar).getPropertyValue("top"));
+        //need to rename to collisionPoint
+        let barHeight = playArea.collisionPoint
+        // let ballHeight = parseInt(window.getComputedStyle(ball).getPropertyValue("height"));
+        let ballHeight = parseInt(ball.style.height)
+        console.log(ballHeight)
+        //ball height
+        let ballToBarCollisionPoint = playArea.height - playArea.collisionPoint + ballHeight
+        console.log(ballToBarCollisionPoint,`balltobarcollisionpoint`)
+        // let ballToBarCollisionPoint = parseInt(playArea.height - barHeight + ballHeight);
+        //ball to bar collision point offset by ball height
+        //level at which the actual collision point is between bar and ball offset by its height
+        const barCollisionPoint = gameField.scrollHeight - ballToBarCollisionPoint
+        console.log(barCollisionPoint,`barcollisionpoint`)
         ball.style.top = height + "px";
         // console.log(ball.style.top);
         // console.log(`height ${height}`)
@@ -216,8 +325,9 @@ const dropBall = (strain) => {
         if(Math.abs(height-barCollisionPoint)<1){
             
             console.log("collision");
-            console.log(collisionCheck(ball,bar))
-            state.score++
+            console.log(collisionCheck(ball, bar))
+            //needs to be made into function
+            state.currentPoints = state.currentPoints+=strainsObj[strain].damagePoints
             console.log(state.points)
             //check for arrow up to collect points
             //increase score
@@ -230,11 +340,11 @@ const dropBall = (strain) => {
     }
     window.requestAnimationFrame(step)
 }
-dropBall("ancestral")
-dropBall("alpha")
-dropBall("beta")
-dropBall("gamma")
-dropBall("delta")
+// dropBall("ancestral")
+// dropBall("alpha")
+// dropBall("beta")
+// dropBall("gamma")
+// dropBall("delta")
 dropBall("omicron")
 
 
@@ -297,4 +407,46 @@ state.cheatcodes.forEach(cheatCode=>{
     document.querySelector(".cheat-codes").appendChild(li)
 })
 //will adjust the NHS to fit the bar div
-textFit(document.querySelector(".bar"), { widthOnly: true, })
+// textFit(document.querySelector(".bar"), { widthOnly: true, })
+
+function initiatePlayArea (){
+    const gameField = document.querySelector(".game-field");
+    playArea.height = gameField.scrollHeight,
+    playArea.width = gameField.scrollWidth,
+    playArea.collisionPoint = parseInt(gameField.scrollHeight/100*90)
+}
+function initiateBar() {
+    //when used "px" needs to be added
+    barObject.width = playArea.width / 5;
+    barObject.left = playArea.width / 2 - (playArea.width / 20);
+    const bar = document.querySelector(".bar");
+    //!!!!!not sure why this ends up being a big without -20
+    bar.style.height = playArea.height - playArea.collisionPoint + "px";
+    bar.style.width = parseInt(barObject.width) + "px";
+    bar.style.top = playArea.collisionPoint + "px"
+    bar.style.left = barObject.left + "px";
+    return bar
+}
+
+function initiateCrowd() {
+    const crowdLevel = document.querySelector(".crowd")
+    crowdLevel.style.top = playArea.collisionPoint + "px";
+    crowdLevel.style.height = playArea.height - playArea.collisionPoint + "px";
+    return crowdLevel
+}
+
+//bar controlls
+document.addEventListener("keydown",(e)=>{
+    if(e.code==="ArrowLeft"){
+        if(parseFloat(bar.style.left)>gameField.clientLeft){
+            bar.style.left=parseFloat(bar.style.left)-(playArea.width/50)+"px"
+        } else if (parseFloat(bar.style.left) < 0) {
+            bar.style.left=0+"px"
+        }
+    }
+    else if(e.code==="ArrowRight"){
+        if(parseFloat(bar.style.left)+(barObject.width)<gameField.clientWidth){
+            bar.style.left=parseFloat(bar.style.left)+(playArea.width/50)+"px"
+        }
+    }
+})
