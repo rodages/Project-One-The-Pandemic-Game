@@ -6,6 +6,8 @@ const infoField = document.querySelector(".game-info-display-field");
 const domPowerUpList = document.querySelector(".power-up-list");
 const domStrainsList = document.querySelector(".strains-list");
 const domJabsList = document.querySelector(".jabs-list");
+const domCurrentPoints = document.querySelector(".points");
+const domCurrentInfections = document.querySelector(".infections");
 
 const playArea = {
     height:gameField.scrollHeight,
@@ -73,53 +75,149 @@ const strainsObj = {
         enhancements: ["omicron","split","fade","resistant"],
     },
 }
+const powerUpsObj = {
+    mask: {
+        bonusPointsPercent: 10,
+        barWidthPercent: 30,
+        speed: 1.7,
+        size: 1.3,
+        enhancemenets:["mask",],
+    },
+    lockdown: {
+        bonusPointsPercent: 0,
+        barWidthPercent: 50,
+        speed: 3,
+        size: 1,
+        enhancemenets:["lockdown",]
+    },
+    vaccine: {
+        speed: 2.2,
+        size: 1.2,
+        enhancemenets:["vaccine",]
+    },
+    single: {
+        bonusPointsPercent: 20,
+        barWidthPercent:35,
+    },
+    double: {
+        bonusPointsPercent: 30,
+        barWidthPercent:40,
+    },
+    booster: {
+        bonusPointsPercent: 50,
+        barWidthPercent:45,
+    },
+}
+
+
+//both functions can be done reusable as they follow lockdown->booster->double->single->mask
+//returns width only to barObject
+function updateBar(playArea,barObject,state,powerUpsObj) {
+    //at the moment bar shrinks from right to left - need to make it central
+    const barObjectUpdate = { ...barObject }
+    const stateObject = {...state}
+    if (stateObject.lockdown) {
+        barObjectUpdate.width = playArea.width/100*powerUpsObj.lockdown.barWidthPercent
+    } else if (stateObject.booster) {
+        barObjectUpdate.width = playArea.width/100*powerUpsObj.booster.barWidthPercent
+    } else if (stateObject.double) {
+        barObjectUpdate.width = playArea.width/100*powerUpsObj.double.barWidthPercent
+    } else if (stateObject.single) {
+        barObjectUpdate.width = playArea.width/100*powerUpsObj.single.barWidthPercent
+    } else if (stateObject.mask) {
+        barObjectUpdate.width = playArea.width/100*powerUpsObj.mask.barWidthPercent
+    } else {
+        barObjectUpdate.width = playArea.width/100*20
+    }
+    barObject.width = barObjectUpdate.width
+    bar.style.width = barObject.width + "px"
+    if (parseInt(bar.style.width) + parseInt(bar.style.left) > playArea.width) {
+        bar.style.left = parseInt(playArea.width) - parseInt(bar.style.width) + "px";
+    }
+    return barObjectUpdate.width
+}
+//returns updatedPoints
+function addBonusPoints(strain,state,powerUpsObj) {
+    let points = strainsObj[strain].damagePoints
+    const stateObject = { ...state }
+    if (stateObject.lockdown) {
+        //points remain standard
+    } else if (stateObject.booster) {
+        points += points/100*powerUpsObj.booster.bonusPointsPercent
+    } else if (stateObject.double) {
+        points += points/100*powerUpsObj.double.bonusPointsPercent
+    } else if (stateObject.single) {
+        points += points/100*powerUpsObj.single.bonusPointsPercent
+    } else if (stateObject.mask) {
+        points += points/100*powerUpsObj.mask.bonusPointsPercent
+    }
+    return points
+}
+
 const strainsArr = ["ancestral", "alpha", "beta", "gamma", "delta", "omicron"]
 const powerUpsArr = ["mask", "lockdown", "vaccine"]
 
 //takes string of strain, returns state.intensity
 function updateIntensity(strain, state) {
     const stateObj = { ...state }
-    let reducer = 1
-        if (state.mask){
-        reducer = 5
-    }
-    if (stateObj.lockdown) {
-        reducer *=5
-    }
+    let reducePoints = strainsObj[strain].damagePoints
 
-    if (state.booster) {
-        reducer = Math.max(reducer*2,30)
-    } else if (state.double) {
-        reducer +=10
-    } else if (state.single) {
-        reducer +=5
+
+    if (stateObj.lockdown) {
+        reducePoints = parseInt(reducePoints/3)
     }
-    if (reducer == 1) {
-        reducer=0
-    } else if (reducer > 100) {
-        reducer = 120
+    if (stateObj.booster) {
+        reducePoints /= 3
     }
-    if (strainsArr.includes(strain)) {
-        if (strain === "omicron" || strain === "gamma") {
-            stateObj.intensity =stateObj.intensity- strainsObj[strain].damagePoints
-        } else {
-            stateObj.intensity =stateObj.intensity- strainsObj[strain].damagePoints+reducer
+    if (stateObj.mask) {
+        reducePoints -= 5
+    }
+    if (strain === "omicron" || strain === "gamma") {
+        stateObj.intensity = stateObj.intensity - reducePoints
+    } else {
+        if (stateObj.double) {
+            reducePoints /=2
+        } else if (stateObj.single) {
+            reducePoints -= 5
         }
-        console.log(stateObj.intensity)
-    } else { console.log("something went wrong", strain) }
+        stateObj.intensity = stateObj.intensity - reducePoints
+    }
+    //safeguards from going cray cray
+    if (stateObj.intensity < 400) {
+        stateObj.intensity = 400
+    }
     return stateObj.intensity
 }
-
+function recursiveTimeout(stateIntensity) {
+    const strain = randomStrain()
+    dropBall(strain)
+    state.intensity = updateIntensity(strain,state)
+    if(state.emergencyStop){
+        console.log(`emergency stop used: ${stateIntensity}`)
+    }else{
+        console.log(stateIntensity)
+        stateIntensity = state.intensity
+        setTimeout(()=>recursiveTimeout(stateIntensity),stateIntensity)
+    }
+}
+//needs to be changed to state
+function randomStrain() {
+    const index = Math.floor(Math.random() * state.currentStrains.length)
+    return strainsArr[index]
+}
 
 const state = {
     highscore:null,
     currentPoints: 0,
-    infected:0,
+    currentInfections:0,
     virusFreePopulation:68429595,
     cheatcodes:["ienjoycheating","fairplayforall","iwantmyfreedom","doitfortheteam","iwantitovernow"],
     cheatCodeArr: [],
     currentStrains: ["ancestral"],
     currentPowerUps: [],
+    collectedJabs: [],
+    collectedPowerUps: [],
+    emergencyStop:false,
     maxJabs: 0,
     intensity:1000,
     mask:false,
@@ -133,6 +231,7 @@ function updateGameParameters(stateObj) {
     stateObj.currentStrains = setStrains(stateObj)
     stateObj.currentPowerUps = setPowerUps(stateObj)
     stateObj.maxJabs = setJabs(stateObj)
+    updateBar()
 }
 function setPowerUps(state) {
     const stateObj = {...state}
@@ -291,7 +390,7 @@ const dropBall = (strain) => {
     const ball = createBall(strain);
     let start, previousTimeStamp;
     const speed = parseFloat(0.05 * strainsObj[strain].speed).toFixed(4);
-    console.log(speed);
+    // console.log(speed);
 
 
     function step(timestamp) {
@@ -307,15 +406,15 @@ const dropBall = (strain) => {
         let barHeight = playArea.collisionPoint
         // let ballHeight = parseInt(window.getComputedStyle(ball).getPropertyValue("height"));
         let ballHeight = parseInt(ball.style.height)
-        console.log(ballHeight)
+        // console.log(ballHeight) was for checking
         //ball height
-        let ballToBarCollisionPoint = playArea.height - playArea.collisionPoint + ballHeight
-        console.log(ballToBarCollisionPoint,`balltobarcollisionpoint`)
+        let ballToBarCollisionPoint = playArea.height - barHeight + ballHeight
+        // console.log(ballToBarCollisionPoint,`balltobarcollisionpoint`)
         // let ballToBarCollisionPoint = parseInt(playArea.height - barHeight + ballHeight);
         //ball to bar collision point offset by ball height
         //level at which the actual collision point is between bar and ball offset by its height
         const barCollisionPoint = gameField.scrollHeight - ballToBarCollisionPoint
-        console.log(barCollisionPoint,`barcollisionpoint`)
+        // console.log(barCollisionPoint,`barcollisionpoint`)
         ball.style.top = height + "px";
         // console.log(ball.style.top);
         // console.log(`height ${height}`)
@@ -327,8 +426,11 @@ const dropBall = (strain) => {
             console.log("collision");
             console.log(collisionCheck(ball, bar))
             //needs to be made into function
-            state.currentPoints = state.currentPoints+=strainsObj[strain].damagePoints
-            console.log(state.points)
+            if (collisionCheck(ball, bar)) {
+                updateScores(state,strain,ball)
+            } else {
+                updateInfections(state,strain,ball)
+            }
             //check for arrow up to collect points
             //increase score
         }
@@ -340,6 +442,25 @@ const dropBall = (strain) => {
     }
     window.requestAnimationFrame(step)
 }
+//addBonusPoints(strain,state,powerUpsObj)
+function updateScores(state,strain,ball) {
+    const stateObj = { ...state }
+    const points = addBonusPoints(strain,state,powerUpsObj)
+    state.currentPoints += points
+    ball.innerText = points
+    ball.style.backgroundColor = "green";
+    setTimeout(()=>ball.remove(),500)
+    domCurrentPoints.innerText = state.currentPoints
+}
+function updateInfections(state,strain,ball) {
+    const stateObj = { ...state }
+    state.currentInfections += strainsObj[strain].damagePoints
+    ball.innerText = strainsObj[strain].damagePoints
+    ball.style.backgroundColor = "red";
+    setTimeout(()=>ball.remove(),500)
+    domCurrentInfections.innerText = state.currentInfections
+}
+
 // dropBall("ancestral")
 // dropBall("alpha")
 // dropBall("beta")
@@ -350,16 +471,16 @@ dropBall("omicron")
 
 
 //check if the ball is in the range of the bar
-function collisionCheck (ball,bar){
-    const ballLocation = {
-        left:ball.offsetLeft,
-        right:ball.offsetLeft+ball.offsetWidth
+function collisionCheck (element,bar){
+    const elementLocation = {
+        left:element.offsetLeft,
+        right:element.offsetLeft+element.offsetWidth
     }
     const barLocation = {
         left:bar.offsetLeft,
         right:bar.offsetLeft+bar.offsetWidth
     }
-    const withinBar = (barLocation.left<ballLocation.right && barLocation.right>ballLocation.left)
+    const withinBar = (barLocation.left<elementLocation.right && barLocation.right>elementLocation.left)
 
     return withinBar
 }
