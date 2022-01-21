@@ -1,21 +1,23 @@
-//div where gameplay happens
+//DIV WHERE GAME IS PLAYED
 const gameField = document.querySelector(".game-field");
-//div with stats/parameters and info
+//DIV WITH STATS/PARAMETERS/INFO
 const infoField = document.querySelector(".game-info-display-field");
-//playing area parameters
-const domPowerUpList = document.querySelector(".power-up-list");
+//DOM ELEMENTS
+const domPowerUpsList = document.querySelector(".power-up-list");
 const domStrainsList = document.querySelector(".strains-list");
 const domJabsList = document.querySelector(".jabs-list");
+
 const domCurrentPoints = document.querySelector(".points");
 const domCurrentInfections = document.querySelector(".infections");
 
+//PLAYAREA PARAMS
 const playArea = {
+    //"px" needs to be added when used
     height:gameField.scrollHeight,
     width: gameField.scrollWidth,
-    //"px" needs to be added when used
     collisionPoint:parseInt(gameField.scrollHeight/100*90)
 }
-//bar parameters
+//BAR PARAMS
 const barObject = {
     //when used "px" needs to be added
     width: Math.round(playArea.width / 5),
@@ -26,7 +28,7 @@ const state = {
     highscore:null,
     currentPoints: 0,
     currentInfections:0,
-    virusFreePopulation:68429595,
+    population:68500,
     cheatcodes:["ienjoycheating","fairplayforall","iwantmyfreedom","doitfortheteam","iwantitovernow"],
     cheatCodeArr: [],
     currentStrains: ["ancestral"],
@@ -42,11 +44,9 @@ const state = {
     double:false,
     booster:false,
 }
-const intervalsObj = {
-    mask: null,
-    lockdown: null,
-    vaccine:null,
-}
+
+
+
 let bar = initiateBar()
 let crowdLevel = initiateCrowd()
 
@@ -54,6 +54,7 @@ function startGame() {
     initiatePlayArea();
     initiateBar();
     initiateCrowd();
+    // updateGameParameters(state)
 }
 startGame()
 
@@ -124,27 +125,146 @@ const powerUpsObj = {
         speed: 2.2,
         size: 1.2,
         enhancements: ["vaccine",],
-        powerUpDuration: 30000,
         reocurrance: 20000,
     },
     single: {
         bonusPointsPercent: 20,
         barWidthPercent: 35,
         powerUpDuration: 30000,
+        treshold:4000,
     },
     double: {
         bonusPointsPercent: 30,
         barWidthPercent: 40,
         powerUpDuration: 20000,
+        treshold:6000,
     },
     booster: {
         bonusPointsPercent: 50,
         barWidthPercent: 45,
         powerUpDuration: 15000,
+        treshold:9000,
     },
 }
 const strainsArr = ["ancestral", "alpha", "beta", "gamma", "delta", "omicron"]
 const powerUpsArr = ["mask", "lockdown", "vaccine"]
+
+
+// dropElement(createElement,"mask",powerUpsArr,powerUpsObj,"power-up")
+
+const intervalsObj = {
+    mask: null,
+    lockdown: null,
+    vaccine:null,
+    id:0,
+}
+// const powerUpsTimeOutArrObj={
+//     mask:[],
+//     lockdown:[],
+//     single:[],
+//     double:[],
+//     booster:[],
+// }
+const jabsList = ["single","double","booster"];
+
+function togglePowerUp(powerUpType){
+    state[powerUpType]=!state[powerUpType]
+    console.log(state[powerUpType])
+}
+
+
+function setPowerUpTimeOut(powerUpType){
+    const duration = powerUpsObj[powerUpType].powerUpDuration
+    if(powerUpType==="vaccine"){
+        setVaccineLevel()
+    }else{
+        togglePowerUp(powerUpType)
+        setTimeout(()=>{
+            togglePowerUp(powerUpType)
+            
+        },duration)
+    }
+    
+}
+
+function toggleClassesHTML(element,htmlListItem){
+    return htmlListItem.querySelector(`.${element}`).classList.toggle("active")
+}
+//timeout will be stored here
+let vaccineTimeOutVariable
+
+//needs to be refactored - too much repetitions
+function setVaccineLevel(){
+    if(state.booster){
+        //do nothing
+        console.log(`already max vaccinations`)
+    }else if(state.double){
+        if(state.currentPoints>=powerUpsObj.booster.treshold){
+            clearTimeout(vaccineTimeOutVariable)
+            state.double=false
+            state.booster=true
+            toggleClassesHTML("booster",domJabsList)
+            const duration = powerUpsObj.booster.powerUpDuration
+            console.log(`got booster`)
+            vaccineTimeOutVariable = setTimeout(()=>{
+                state.booster = false;
+                state.double = true;
+                console.log(`booster jab worn out`)
+                toggleClassesHTML("booster",domJabsList)
+                //make double wear out 
+                vaccineTimeOutVariable=setTimeout(()=>{
+                    state.double = false;
+                    state.single = true;
+                    console.log(`double jab worn out`)
+                    toggleClassesHTML("double",domJabsList)
+                    //make single wear out
+                    vaccineTimeOutVariable=setTimeout(()=>{
+                        state.single = false;
+                        console.log(`first jab worn out`)
+                        toggleClassesHTML("single",domJabsList)
+                    },duration)
+                },duration)
+            },duration)
+        }
+    } else if(state.single){
+        //if enought points for second jab
+        if(state.currentPoints>=powerUpsObj.double.treshold){
+            clearTimeout(vaccineTimeOutVariable)
+            state.single=false
+            state.double=true
+            toggleClassesHTML("double",domJabsList)
+            const duration = powerUpsObj.double.powerUpDuration
+            console.log(`got second jab`)
+            vaccineTimeOutVariable=setTimeout(()=>{
+                state.double = false;
+                state.single = true;
+                console.log(`double jab worn out`)
+                toggleClassesHTML("double",domJabsList)
+                //make single wear out
+                vaccineTimeOutVariable=setTimeout(()=>{
+                    state.single = false;
+                    console.log(`first jab worn out`)
+                    toggleClassesHTML("single",domJabsList)
+                },duration)
+            },duration)
+        }//otherwise do nothing
+    } else{
+        state.single = true
+        toggleClassesHTML("single",domJabsList)
+        const duration = powerUpsObj.single.powerUpDuration
+        console.log(`got first jab`)
+        vaccineTimeOutVariable=setTimeout(()=>{
+            state.single = false;
+            console.log(`first jab worn out`)
+            toggleClassesHTML("single",domJabsList)
+        },duration)
+    }
+}
+
+
+
+
+// setPowerUpTimeOut("mask")
 
 //both functions can be done reusable as they follow lockdown->booster->double->single->mask
 //returns width only to barObject
@@ -159,11 +279,11 @@ function updateBar() {
     } else if (state.booster) {
         barObject.width = setBarWidthRounded(powerUpsObj.booster.barWidthPercent)
     } else if (state.double) {
-        barObject.width = setBarWidthRounded(powerUpsObj.booster.barWidthPercent)
+        barObject.width = setBarWidthRounded(powerUpsObj.double.barWidthPercent)
     } else if (state.single) {
-        barObject.width = setBarWidthRounded(powerUpsObj.booster.barWidthPercent)
+        barObject.width = setBarWidthRounded(powerUpsObj.single.barWidthPercent)
     } else if (state.mask) {
-        barObject.width = setBarWidthRounded(powerUpsObj.booster.barWidthPercent)
+        barObject.width = setBarWidthRounded(powerUpsObj.mask.barWidthPercent)
     } else {
         barObject.width = Math.round(playArea.width/100*20)
     }
@@ -176,7 +296,7 @@ function updateBar() {
 //returns updatedPoints
 function addBonusPoints(strain,state,powerUpsObj) {
     let points = strainsObj[strain].damagePoints
-    const stateObject = { ...state }
+    // const stateObject = { ...state }
     if (state.lockdown) {
         //points remain standard
     } else if (state.booster) {
@@ -239,7 +359,7 @@ function recursiveTimeout(stateIntensity) {
     }
 }
 
-//needs to be changed to state
+
 //state.currentStrains || state.currentPowerUps
 function randomElementOfArray(arr) {
     const index = Math.floor(Math.random() * arr.length)
@@ -254,6 +374,7 @@ function updateGameParameters(stateObj) {
     stateObj.maxJabs = setJabs(stateObj)
     updateBar()
 }
+
 function setPowerUps(state) {
     const stateObj = {...state}
     const maskPoints = 500
@@ -298,14 +419,15 @@ function setPowerUps(state) {
         console.log(`too little points or something went wrong`)
         console.log(stateObj)
     }
-    createLis(domPowerUpList,stateObj.currentPowerUps,)
+    createLis(domPowerUpsList,stateObj.currentPowerUps,)
     return stateObj.currentPowerUps
 }
+
 function setJabs(state) {
     const stateObj = {...state}
-    const singleJabPoints = 4000;
-    const doubleJabPoints = 6000;
-    const boosterJabPoints = 9000;
+    const singleJabPoints = powerUpsObj.single.treshold;
+    const doubleJabPoints = powerUpsObj.double.treshold;
+    const boosterJabPoints = powerUpsObj.booster.treshold;
     //booster treshold
     if (stateObj.currentPoints >= boosterJabPoints) {
         stateObj.maxJabs = 3;
@@ -340,33 +462,43 @@ function setStrains(state) {
     const omicronPoints = 8000;
     //omicron
     if (stateObj.currentPoints >= omicronPoints) {
-        stateObj.currentStrains = [...strainsArr]
-        console.log(stateObj.currentStrains, `currentStrains`)
-        console.log(`omicron enabled`)
+        if(strainsArr.length>stateObj.currentStrains.length){
+            stateObj.currentStrains = [...strainsArr]
+            console.log(stateObj.currentStrains, `currentStrains`)
+            console.log(`omicron enabled`)
+        }
     }
     // delta
     else if (stateObj.currentPoints >= deltaPoints) {
-        stateObj.currentStrains = [...strainsArr.slice(0, 5)]
-        console.log(stateObj.currentStrains, `currentStrains`)
-        console.log(`delta enabled`)
+        if(strainsArr.slice(0, 5).length>stateObj.currentStrains.length){
+            stateObj.currentStrains = [...strainsArr.slice(0, 5)]
+            console.log(stateObj.currentStrains, `currentStrains`)
+            console.log(`delta enabled`)
+        }
     }
     // gamma
     else if (stateObj.currentPoints >= gammaPoints) {
-        stateObj.currentStrains = [...strainsArr.slice(0, 4)]
-        console.log(stateObj.currentStrains, `currentStrains`)
-        console.log(`gamma enabled`)
+        if(strainsArr.slice(0,4)>stateObj.currentStrains.length){
+            stateObj.currentStrains = [...strainsArr.slice(0, 4)]
+            console.log(stateObj.currentStrains, `currentStrains`)
+            console.log(`gamma enabled`)
+        }
     }
     // beta
     else if (stateObj.currentPoints >= betaPoints) {
-        stateObj.currentStrains = [...strainsArr.slice(0, 3)]
-        console.log(stateObj.currentStrains, `currentStrains`)
-        console.log(`beta enabled`)
+        if(strainsArr.slice(0, 3)>stateObj.currentStrains){
+            stateObj.currentStrains = [...strainsArr.slice(0, 3)]
+            console.log(stateObj.currentStrains, `currentStrains`)
+            console.log(`beta enabled`)
+        }
     }
     //alpha
     else if (stateObj.currentPoints >= alphaPoints) {
-        stateObj.currentStrains = [...strainsArr.slice(0, 2)]
-        console.log(stateObj.currentStrains, `currentStrains`)
-        console.log(`alpha enabled`)
+        if(strainsArr.slice(0, 2).length>stateObj.currentStrains.length){
+            stateObj.currentStrains = [...strainsArr.slice(0, 2)]
+            console.log(stateObj.currentStrains, `currentStrains`)
+            console.log(`alpha enabled`)
+        }
     } else {
         console.log(`too little points or something went wrong`)
         console.log(stateObj)
@@ -375,9 +507,9 @@ function setStrains(state) {
     return stateObj.currentStrains
 }
 
-function createLis(parentElement, powerupType) {
-    if (parentElement.children.length !== powerupType.length) {
-        powerupType.forEach(item => {
+function createLis(parentElement, elementType) {
+    if (parentElement.children.length !== elementType.length) {
+        elementType.forEach(item => {
             if (!parentElement.querySelector(`.${item}`)) {
                 const li = document.createElement("li")
                 li.innerText = item[0].toUpperCase()+item.slice(1)
@@ -392,7 +524,8 @@ function createLis(parentElement, powerupType) {
 
 
 
-//ball for testing
+//ball is falling too random atm - need to limit possibility to /screen from previous ball
+//new func take prev drop location - set range to 2/screen - if left range out of screen ->add extra range to the right-same on the right
 function elementLocation(area, elementWidth) {
     const location = Math.floor(Math.random() * playArea.width) + 1
     // console.log(location, `location`)
@@ -469,8 +602,8 @@ function dropElement(elementFunc,type,arr,obj,nameOfClass) {
                     updateInfections(state, type, domElement)
                 }
             } else if (!arr.includes("ancestral")) {
-                if ((collisionCheck(domElement, bar))){
-                    console.log(`powerup collected`)
+                if (collisionCheck(domElement, bar)){
+                    setPowerUpTimeOut(domElement.classList[0])
                 }
 
             }
@@ -487,7 +620,7 @@ function dropElement(elementFunc,type,arr,obj,nameOfClass) {
 }
 //addBonusPoints(strain,state,powerUpsObj)
 function updateScores(state,strain,ball) {
-    const stateObj = { ...state }
+    // const stateObj = { ...state }
     const points = addBonusPoints(strain,state,powerUpsObj)
     state.currentPoints += points
     ball.innerText = points
@@ -495,19 +628,22 @@ function updateScores(state,strain,ball) {
     domCurrentPoints.innerText = state.currentPoints
 }
 function updateInfections(state,strain,ball) {
-    const stateObj = { ...state }
+    // const stateObj = { ...state }
     state.currentInfections += strainsObj[strain].damagePoints
     ball.innerText = strainsObj[strain].damagePoints
     ball.style.backgroundColor = "red";
     domCurrentInfections.innerText = state.currentInfections
 }
 
-dropElement(createElement,"ancestral",strainsArr,strainsObj,"ball")
-dropElement(createElement,"alpha",strainsArr,strainsObj,"ball")
-dropElement(createElement,"beta",strainsArr,strainsObj,"ball")
-dropElement(createElement,"gamma",strainsArr,strainsObj,"ball")
-dropElement(createElement,"delta",strainsArr,strainsObj,"ball")
-dropElement(createElement,"omicron",strainsArr,strainsObj,"ball")
+
+
+
+// dropElement(createElement,"ancestral",strainsArr,strainsObj,"ball")
+// dropElement(createElement,"alpha",strainsArr,strainsObj,"ball")
+// dropElement(createElement,"beta",strainsArr,strainsObj,"ball")
+// dropElement(createElement,"gamma",strainsArr,strainsObj,"ball")
+// dropElement(createElement,"delta",strainsArr,strainsObj,"ball")
+// dropElement(createElement,"omicron",strainsArr,strainsObj,"ball")
 
 
 
