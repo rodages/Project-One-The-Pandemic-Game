@@ -45,19 +45,6 @@ const state = {
     booster:false,
 }
 
-
-
-let bar = initiateBar()
-let crowdLevel = initiateCrowd()
-
-function startGame() {
-    initiatePlayArea();
-    initiateBar();
-    initiateCrowd();
-    // updateGameParameters(state)
-}
-startGame()
-
 const strainsObj = {
     ancestral:{
         name:"ancestral",
@@ -149,49 +136,55 @@ const powerUpsObj = {
 const strainsArr = ["ancestral", "alpha", "beta", "gamma", "delta", "omicron"]
 const powerUpsArr = ["mask", "lockdown", "vaccine"]
 
-
-// dropElement(createElement,"mask",powerUpsArr,powerUpsObj,"power-up")
-
 const intervalsObj = {
     mask: null,
     lockdown: null,
     vaccine:null,
     id:0,
 }
-// const powerUpsTimeOutArrObj={
-//     mask:[],
-//     lockdown:[],
-//     single:[],
-//     double:[],
-//     booster:[],
-// }
 const jabsList = ["single","double","booster"];
 
+//timeout will be stored here for jabs
+let vaccineTimeOutVariable
+
+let bar = initiateBar()
+let crowdLevel = initiateCrowd()
+
+function startGame() {
+    initiatePlayArea();
+    initiateBar();
+    initiateCrowd();
+    updateGameParameters(state)
+}
+// startGame()
+
+
+//POWERUP UPDATE FUNCTIONS
 function togglePowerUp(powerUpType){
     state[powerUpType]=!state[powerUpType]
-    console.log(state[powerUpType])
 }
-
 
 function setPowerUpTimeOut(powerUpType){
     const duration = powerUpsObj[powerUpType].powerUpDuration
     if(powerUpType==="vaccine"){
         setVaccineLevel()
     }else{
+        if(powerUpType==="lockdown"){
+            resetBallDropIntensity()
+        }
         togglePowerUp(powerUpType)
         setTimeout(()=>{
             togglePowerUp(powerUpType)
             
         },duration)
     }
-    
 }
-
-function toggleClassesHTML(element,htmlListItem){
-    return htmlListItem.querySelector(`.${element}`).classList.toggle("active")
+function resetBallDropIntensity(){
+    const endPowerUpInterval = setInterval(()=>{state.intensity = 1000},100)
+            setTimeout(()=>{
+                clearInterval(endPowerUpInterval)
+            },powerUpsObj.lockdown.powerUpDuration*1.5)
 }
-//timeout will be stored here
-let vaccineTimeOutVariable
 
 //needs to be refactored - too much repetitions
 function setVaccineLevel(){
@@ -261,10 +254,9 @@ function setVaccineLevel(){
     }
 }
 
-
-
-
-// setPowerUpTimeOut("mask")
+function toggleClassesHTML(element,htmlListItem){
+    return htmlListItem.querySelector(`.${element}`).classList.toggle("active")
+}
 
 //both functions can be done reusable as they follow lockdown->booster->double->single->mask
 //returns width only to barObject
@@ -365,8 +357,6 @@ function randomElementOfArray(arr) {
     const index = Math.floor(Math.random() * arr.length)
     return arr[index]
 }
-
-
 
 function updateGameParameters(stateObj) {
     stateObj.currentStrains = setStrains(stateObj)
@@ -520,10 +510,6 @@ function createLis(parentElement, elementType) {
     }
 }
 
-
-
-
-
 //ball is falling too random atm - need to limit possibility to /screen from previous ball
 //new func take prev drop location - set range to 2/screen - if left range out of screen ->add extra range to the right-same on the right
 function elementLocation(area, elementWidth) {
@@ -553,16 +539,13 @@ function createElement(type,arr,obj,nameOfClass) {
     
 }
 
-
-
 //elementFunc -  creates ball or powerup | type - strain or type of powerup
 //createElement("mask",powerUpsArr,powerUpsObj,"power-up")
 function dropElement(elementFunc,type,arr,obj,nameOfClass) {
     const domElement = elementFunc(type,arr,obj,nameOfClass);
-    let start, previousTimeStamp;
+    let start
     //needs to be refactored for element
     const speed = parseFloat(0.05 * obj[type].speed).toFixed(4);
-
 
     function step(timestamp) {
         if (start === undefined) {
@@ -574,9 +557,7 @@ function dropElement(elementFunc,type,arr,obj,nameOfClass) {
 
         //need to rename to collisionPoint
         let barHeight = playArea.collisionPoint
-        // let ballHeight = parseInt(window.getComputedStyle(ball).getPropertyValue("height"));
         let elementHeight = parseInt(domElement.style.height)
-        // console.log(elementHeight) was for checking
         //ball height
         let elementToBarCollisionPoint = playArea.height - barHeight + elementHeight
         // console.log(elementToBarCollisionPoint,`elementToBarCollisionPoint`)
@@ -586,15 +567,9 @@ function dropElement(elementFunc,type,arr,obj,nameOfClass) {
         const barCollisionPoint = gameField.scrollHeight - elementToBarCollisionPoint
         // console.log(barCollisionPoint,`barcollisionpoint`)
         domElement.style.top = height + "px";
-        // console.log(ball.style.top);
-        // console.log(`height ${height}`)
-        // console.log(`barCollisionPoint ${barCollisionPoint}`)
         
         //checks for collision and increases the score
         if (Math.abs(height - barCollisionPoint) < 1) {
-            
-            console.log("collision");
-            //needs to be changed to state.strainsArr
             if (arr.includes("ancestral")) {
                 if (collisionCheck(domElement, bar)) {
                     updateScores(state, type, domElement)
@@ -605,20 +580,17 @@ function dropElement(elementFunc,type,arr,obj,nameOfClass) {
                 if (collisionCheck(domElement, bar)){
                     setPowerUpTimeOut(domElement.classList[0])
                 }
-
             }
-        updateGameParameters(state)
-        setTimeout(()=>domElement.remove(),500)
-        }
-        //cancells interval, removes the ball from the screen
-        
+            updateGameParameters(state)
+            setTimeout(()=>domElement.remove(),500)
+            }        
         else if(height<barCollisionPoint){
             window.requestAnimationFrame(step);
+            }
         }
-    }
     window.requestAnimationFrame(step)
 }
-//addBonusPoints(strain,state,powerUpsObj)
+
 function updateScores(state,strain,ball) {
     // const stateObj = { ...state }
     const points = addBonusPoints(strain,state,powerUpsObj)
@@ -636,18 +608,6 @@ function updateInfections(state,strain,ball) {
 }
 
 
-
-
-// dropElement(createElement,"ancestral",strainsArr,strainsObj,"ball")
-// dropElement(createElement,"alpha",strainsArr,strainsObj,"ball")
-// dropElement(createElement,"beta",strainsArr,strainsObj,"ball")
-// dropElement(createElement,"gamma",strainsArr,strainsObj,"ball")
-// dropElement(createElement,"delta",strainsArr,strainsObj,"ball")
-// dropElement(createElement,"omicron",strainsArr,strainsObj,"ball")
-
-
-
-//check if the ball is in the range of the bar
 function collisionCheck (element,bar){
     const elementLocation = {
         left:element.offsetLeft,
@@ -662,14 +622,7 @@ function collisionCheck (element,bar){
     return withinBar
 }
 
-//responsiveness if window size get changed during the game
-// {function resized() {
-//     bar.style.width = parseInt(document.querySelector(".game-field").clientWidth / 10) + "px";
-//     console.log(ball.width);
-//     ball.width = parseInt(document.querySelector(".game-field").clientWidth / 30) + "px";
-//     console.log(ball.width);
-//     window.onresize = resized}
-// }
+
 
 //NEEDTOREMOVECONSOLELOG
 //
@@ -704,8 +657,6 @@ state.cheatcodes.forEach(cheatCode=>{
     li.textContent = cheatCode
     document.querySelector(".cheat-codes").appendChild(li)
 })
-//will adjust the NHS to fit the bar div
-// textFit(document.querySelector(".bar"), { widthOnly: true, })
 
 function initiatePlayArea (){
     const gameField = document.querySelector(".game-field");
@@ -748,104 +699,3 @@ document.addEventListener("keydown",(e)=>{
         }
     }
 })
-
-//OLDCODE
-
-// const createBall = (strain) => {
-//     if (strainsArr.includes(strain)) {
-//         const ball = document.createElement("div")
-//         const ballSize = parseInt(playArea.width / 30)*strainsObj[strain].size;
-//         strainsObj[strain].enhancements.forEach(enhancement => ball.classList.add(enhancement));
-//         ball.style.height = ballSize + "px"
-//         ball.style.width = ballSize + "px"
-//         ball.classList.add("ball");
-//         ball.style.left = elementLocation(playArea.width, ballSize) + "px"
-//         // ball.innerText=strainsObj[strain].name
-//         // console.log(ball);
-//         gameField.appendChild(ball)
-//         return ball
-//     } else { console.log("something went wrong", strain) }
-    
-// }
-
-// const dropBall = (strain) => {
-//     const ball = createBall(strain);
-//     let start, previousTimeStamp;
-//     const speed = parseFloat(0.05 * strainsObj[strain].speed).toFixed(4);
-//     // console.log(speed);
-
-
-//     function step(timestamp) {
-//         if (start === undefined) {
-//             start = timestamp;
-//         }
-//         const elapsed = timestamp - start;
-
-//         const height = elapsed * speed
-
-//         // let barHeight = parseInt(window.getComputedStyle(bar).getPropertyValue("top"));
-//         //need to rename to collisionPoint
-//         let barHeight = playArea.collisionPoint
-//         // let ballHeight = parseInt(window.getComputedStyle(ball).getPropertyValue("height"));
-//         let ballHeight = parseInt(ball.style.height)
-//         // console.log(ballHeight) was for checking
-//         //ball height
-//         let ballToBarCollisionPoint = playArea.height - barHeight + ballHeight
-//         // console.log(ballToBarCollisionPoint,`balltobarcollisionpoint`)
-//         // let ballToBarCollisionPoint = parseInt(playArea.height - barHeight + ballHeight);
-//         //ball to bar collision point offset by ball height
-//         //level at which the actual collision point is between bar and ball offset by its height
-//         const barCollisionPoint = gameField.scrollHeight - ballToBarCollisionPoint
-//         // console.log(barCollisionPoint,`barcollisionpoint`)
-//         ball.style.top = height + "px";
-//         // console.log(ball.style.top);
-//         // console.log(`height ${height}`)
-//         // console.log(`barCollisionPoint ${barCollisionPoint}`)
-        
-//         //checks for collision and increases the score
-//         if(Math.abs(height-barCollisionPoint)<1){
-            
-//             console.log("collision");
-//             //needs to be made into function
-//             if (collisionCheck(ball, bar)) {
-//                 updateScores(state,strain,ball)
-//             } else {
-//                 updateInfections(state,strain,ball)
-//             }
-
-//             setTimeout(() => ball.remove(), 500)
-//             updateGameParameters(state)
-//         }
-//         //cancells interval, removes the ball from the screen
-
-//         else if(height<barCollisionPoint){
-//             window.requestAnimationFrame(step);
-//         }
-//     }
-//     window.requestAnimationFrame(step)
-// }
-
-// function updateBar(playArea,barObject,state,powerUpsObj) {
-//     //at the moment bar shrinks from right to left - need to make it central
-//     const barObjectUpdate = { ...barObject }
-//     const stateObject = {...state}
-//     if (stateObject.lockdown) {
-//         barObjectUpdate.width = playArea.width/100*powerUpsObj.lockdown.barWidthPercent
-//     } else if (stateObject.booster) {
-//         barObjectUpdate.width = playArea.width/100*powerUpsObj.booster.barWidthPercent
-//     } else if (stateObject.double) {
-//         barObjectUpdate.width = playArea.width/100*powerUpsObj.double.barWidthPercent
-//     } else if (stateObject.single) {
-//         barObjectUpdate.width = playArea.width/100*powerUpsObj.single.barWidthPercent
-//     } else if (stateObject.mask) {
-//         barObjectUpdate.width = playArea.width/100*powerUpsObj.mask.barWidthPercent
-//     } else {
-//         barObjectUpdate.width = playArea.width/100*20
-//     }
-//     barObject.width = barObjectUpdate.width
-//     bar.style.width = barObject.width + "px"
-//     if (parseInt(bar.style.width) + parseInt(bar.style.left) > playArea.width) {
-//         bar.style.left = parseInt(playArea.width) - parseInt(bar.style.width) + "px";
-//     }
-//     return barObjectUpdate.width
-// }
