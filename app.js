@@ -23,12 +23,12 @@ const barObject = {
     width: Math.round(playArea.width / 5),
     left:playArea.width/2-(playArea.width/20),
 }
-
+//MAIN GAME STATE
 const state = {
     highscore:null,
     currentPoints: 0,
     currentInfections:0,
-    population:68500,
+    population:6850,
     cheatcodes:["ienjoycheating","fairplayforall","iwantmyfreedom","doitfortheteam","iwantitovernow"],
     cheatCodeArr: [],
     currentStrains: ["ancestral"],
@@ -43,8 +43,22 @@ const state = {
     single:false,
     double:false,
     booster:false,
+    gameWon:false,
+    gameLost:false,
+    cheats : {
+        cheatBar:{
+            active:null,
+            oldBarWidth:null,
+        },
+        powerUps:{
+            empty:[],
+            default:["mask", "lockdown", "vaccine"],
+            old:[]
+        }
+    },
 }
 
+//DROPABLE ITEMS STATE AND PARAMS
 const strainsObj = {
     ancestral:{
         name:"ancestral",
@@ -133,20 +147,22 @@ const powerUpsObj = {
         treshold:9000,
     },
 }
+//OPTIONS
 const strainsArr = ["ancestral", "alpha", "beta", "gamma", "delta", "omicron"]
 const powerUpsArr = ["mask", "lockdown", "vaccine"]
-
+const jabsList = ["single","double","booster"];
+//POWERUP INTERVALS STORED IN CASE THEY SHOULD GET CANCELLED
 const intervalsObj = {
     mask: null,
     lockdown: null,
     vaccine:null,
     id:0,
 }
-const jabsList = ["single","double","booster"];
 
 //timeout will be stored here for jabs
 let vaccineTimeOutVariable
 
+//DEFAULT LOAD PARAMS FOR SCREEN OBJECTS
 let bar = initiateBar()
 let crowdLevel = initiateCrowd()
 
@@ -156,7 +172,7 @@ function startGame() {
     initiateCrowd();
     updateGameParameters(state)
 }
-// startGame()
+startGame()
 
 
 //POWERUP UPDATE FUNCTIONS
@@ -258,31 +274,60 @@ function toggleClassesHTML(element,htmlListItem){
     return htmlListItem.querySelector(`.${element}`).classList.toggle("active")
 }
 
+//activates cheatBar
+function setCheatBar(){
+    state.cheats.cheatBar.active=true;
+    state.cheats.cheatBar.oldBarWidth=barObject.width
+}
+function clearCheatBar(){
+    state.cheats.cheatBar.active=false;
+}
+function updateCheatBar(){
+    const cheatBar = {...state.cheats.cheatBar}
+    if(cheatBar.active){
+        state.cheats.cheatBar.oldBarWidth = barObject.width
+        barObject.width =setBarWidthRounded(100)
+        bar.style.width = barObject.width + "px"
+        bar.style.left=0+"px"
+        return barObject.width
+    }else if(cheatBar.oldBarWidth){
+        barObject.width=cheatBar.oldBarWidth
+        bar.style.width = barObject.width + "px"
+        state.cheats.cheatBar.oldBarWidth = null;
+        bar.style.left = playArea.width/2 - barObject.width/2 + "px"
+        return barObject.width
+    }
+}
 //both functions can be done reusable as they follow lockdown->booster->double->single->mask
-//returns width only to barObject
-
+//returns width only to barObject, but does not assign
+function setBarWidthRounded(widthParams) {
+    return Math.round(playArea.width/100*widthParams) 
+}
 function updateBar() {
-    function setBarWidthRounded(widthParams) {
-        return Math.round(playArea.width/100*widthParams)
+    
+    if(state.cheats.cheatBar.active || state.cheats.cheatBar.oldBarWidth){
+        updateCheatBar()
+    }else{
+        //at the moment bar shrinks from right to left - need to make it central
+        if (state.lockdown) {
+            barObject.width = setBarWidthRounded(powerUpsObj.lockdown.barWidthPercent)
+        } else if (state.booster) {
+            barObject.width = setBarWidthRounded(powerUpsObj.booster.barWidthPercent)
+        } else if (state.double) {
+            barObject.width = setBarWidthRounded(powerUpsObj.double.barWidthPercent)
+        } else if (state.single) {
+            barObject.width = setBarWidthRounded(powerUpsObj.single.barWidthPercent)
+        } else if (state.mask) {
+            barObject.width = setBarWidthRounded(powerUpsObj.mask.barWidthPercent)
+        } else {
+            barObject.width = Math.round(playArea.width/100*20)
+        }
+        bar.style.width = barObject.width + "px"
+        if (parseInt(bar.style.width) + parseInt(bar.style.left) > playArea.width) {
+            bar.style.left = parseInt(playArea.width) - parseInt(bar.style.width) + "px";
+        }
     }
-    //at the moment bar shrinks from right to left - need to make it central
-    if (state.lockdown) {
-        barObject.width = setBarWidthRounded(powerUpsObj.lockdown.barWidthPercent)
-    } else if (state.booster) {
-        barObject.width = setBarWidthRounded(powerUpsObj.booster.barWidthPercent)
-    } else if (state.double) {
-        barObject.width = setBarWidthRounded(powerUpsObj.double.barWidthPercent)
-    } else if (state.single) {
-        barObject.width = setBarWidthRounded(powerUpsObj.single.barWidthPercent)
-    } else if (state.mask) {
-        barObject.width = setBarWidthRounded(powerUpsObj.mask.barWidthPercent)
-    } else {
-        barObject.width = Math.round(playArea.width/100*20)
-    }
-    bar.style.width = barObject.width + "px"
-    if (parseInt(bar.style.width) + parseInt(bar.style.left) > playArea.width) {
-        bar.style.left = parseInt(playArea.width) - parseInt(bar.style.width) + "px";
-    }
+    
     return barObject.width
 }
 //returns updatedPoints
@@ -539,6 +584,55 @@ function createElement(type,arr,obj,nameOfClass) {
     
 }
 
+function recursiveTimeout(stateIntensity) {
+    //dropElement(elementFunc,type,arr,obj,nameOfClass)
+    //createElement = (type,arr,obj,nameOfClass)
+    const strain = randomElementOfArray(state.currentStrains)
+    // dropBall(strain)
+    dropElement(createElement,strain,state.currentStrains,strainsObj,"ball")
+    state.intensity = updateIntensity(strain,state)
+    if(state.emergencyStop){
+        console.log(`emergency stop used: ${stateIntensity}`)
+    }else{
+        console.log(stateIntensity)
+        stateIntensity = state.intensity
+        setTimeout(()=>recursiveTimeout(stateIntensity),stateIntensity)
+    }
+}
+
+function reqAnimationDelay(stateIntensity){
+    const strain = randomElementOfArray(state.currentStrains)
+
+    let start, nextDrop
+
+    function spawn(timestamp){
+        if(!start){
+            start = timestamp
+        }
+        if(!nextDrop){
+            nextDrop = state.intensity
+        }
+        timepassed = timestamp - start
+
+        if(timepassed>nextDrop){
+            nextDrop=timepassed+state.intensity
+            dropElement(createElement,strain,state.currentStrains,strainsObj,"ball")
+            state=state
+            if(state.intensity<400){
+                state.intensity=400
+            }
+        }
+        
+        
+        
+    //condition to continue
+        if(!state.gameWon||!state.gameLost){
+            requestAnimationFrame(spawn)
+        }
+    }
+    window.requestAnimationFrame(spawn)
+}
+
 //elementFunc -  creates ball or powerup | type - strain or type of powerup
 //createElement("mask",powerUpsArr,powerUpsObj,"power-up")
 function dropElement(elementFunc,type,arr,obj,nameOfClass) {
@@ -622,7 +716,49 @@ function collisionCheck (element,bar){
     return withinBar
 }
 
+function executeCheatCode(cheatcode){
+    console.log(cheatcode)
+    switch(cheatcode){
+        case "ienjoycheating":
+            ienjoycheating();
+            break;
+        case "fairplayforall":
+            fairplayforall();
+            break;
+        case "iwantmyfreedom":
+            iwantmyfreedom();
+            break;
+        case "doitfortheteam":
+            doitfortheteam();
+            break;
+        case "iwantitovernow":
+            iwantitovernow();
+            break;
+        default:
+            console.log("no code")
+    }
+}
+function ienjoycheating(){
+    setCheatBar()
+    updateBar()
+}
+function fairplayforall(){
+    clearCheatBar()
+    updateBar()
+}
+function iwantmyfreedom(){
+    state.cheats.powerUps.old = [...state.currentPowerUps];
+    state.currentPowerUps = [...state.cheats.powerUps.empty]
+}
+function doitfortheteam(){
+    //sets powerups to default
+    state.currentPowerUps = [...state.cheats.powerUps.old]
+}
 
+function iwantitovernow(){
+    //stop game
+    //display win screen
+}
 
 //NEEDTOREMOVECONSOLELOG
 //
@@ -631,13 +767,21 @@ function addLetterToCheatCodeArr(letter){
     if(state.cheatCodeArr.length<14){
         //adds letter to the array
         state.cheatCodeArr=[...state.cheatCodeArr,letter]
-        // console.log(state.cheatCodeArr.join(""))
+        //test
+        if(state.cheatCodeArr.length==14){
+            if(state.cheatcodes.includes(state.cheatCodeArr.join(""))){
+                executeCheatCode(state.cheatCodeArr.join(""))
+            }
+            
+            //function to execute cheatcode with switch statement
+        }
     }else if(state.cheatCodeArr.length==14){
         //discards first letter, adds current letter to cheatcode array
         state.cheatCodeArr = [...state.cheatCodeArr.slice(1),letter]
-        // console.log(state.cheatCodeArr.join(""))
         //checks if cheatcodecriteria has been met
-        // console.log(state.cheatcodes.includes(state.cheatCodeArr.join("")))
+        if(state.cheatcodes.includes(state.cheatCodeArr.join(""))){
+            executeCheatCode(state.cheatCodeArr.join(""))
+        }
         //function to execute cheatcode with switch statement
     }
     else{
@@ -699,3 +843,5 @@ document.addEventListener("keydown",(e)=>{
         }
     }
 })
+
+// recursiveTimeout()
