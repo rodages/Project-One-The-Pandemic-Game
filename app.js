@@ -50,6 +50,7 @@ const state = {
     booster:false,
     gameWon:false,
     gameLost:false,
+    gameActive:false,
     cheats : {
         cheatBar:{
             active:null,
@@ -172,14 +173,6 @@ let vaccineTimeOutVariable
 let bar = initiateBar()
 let crowdLevel = initiateCrowd()
 
-function startGame() {
-    initiatePlayArea();
-    initiateBar();
-    initiateCrowd();
-    updateGameParameters(state)
-    setDefaultState()
-}
-startGame()
 
 
 //POWERUP UPDATE FUNCTIONS
@@ -209,7 +202,7 @@ function resetBallDropIntensity(){
             },powerUpsObj.lockdown.powerUpDuration*1.5)
 }
 
-//needs to be refactored - too much repetitions
+//needs to be refactored - AS WET AS IT GETS
 function setVaccineLevel(){
     if(state.booster){
         //do nothing
@@ -277,11 +270,10 @@ function setVaccineLevel(){
     }
 }
 
-//not in use at the moment
+// active class not defines
 function toggleClassesHTML(element,htmlListItem){
     return htmlListItem.querySelector(`.${element}`).classList.toggle("active")
 }
-
 
 //both functions can be done reusable as they follow lockdown->booster->double->single->mask
 //returns width only to barObject, but does not assign
@@ -371,10 +363,12 @@ function randomElementOfArray(arr) {
 }
 
 function updateGameParameters(stateObj) {
-    stateObj.currentStrains = setStrains(stateObj)
+    setStrains(stateObj)
     stateObj.currentPowerUps = setPowerUps(stateObj)
     stateObj.maxJabs = setJabs(stateObj)
     updateBar()
+    updateDomScoreDisplay()
+    goalCheck()
 }
 
 function setPowerUps(state) {
@@ -457,57 +451,57 @@ function setJabs(state) {
     return stateObj.maxJabs
 }
 function setStrains(state) {
-    const stateObj = { ...state }
+    // const state = { ...state }
     const alphaPoints = 500;
     const betaPoints = 1000;
     const gammaPoints = 2000;
     const deltaPoints = 3000;
     const omicronPoints = 5000;
     //omicron
-    if (stateObj.currentPoints >= omicronPoints) {
-        if(strainsArr.length>stateObj.currentStrains.length){
-            stateObj.currentStrains = [...strainsArr]
-            console.log(stateObj.currentStrains, `currentStrains`)
+    if (state.currentPoints >= omicronPoints) {
+        if(strainsArr.length>state.currentStrains.length){
+            state.currentStrains = [...strainsArr]
+            console.log(state.currentStrains, `currentStrains`)
             console.log(`omicron enabled`)
         }
     }
     // delta
-    else if (stateObj.currentPoints >= deltaPoints) {
-        if(strainsArr.slice(0, 5).length>stateObj.currentStrains.length){
-            stateObj.currentStrains = [...strainsArr.slice(0, 5)]
-            console.log(stateObj.currentStrains, `currentStrains`)
+    else if (state.currentPoints >= deltaPoints) {
+        if(strainsArr.slice(0, 5).length>state.currentStrains.length){
+            state.currentStrains = [...strainsArr.slice(0, 5)]
+            console.log(state.currentStrains, `currentStrains`)
             console.log(`delta enabled`)
         }
     }
     // gamma
-    else if (stateObj.currentPoints >= gammaPoints) {
-        if(strainsArr.slice(0,4)>stateObj.currentStrains.length){
-            stateObj.currentStrains = [...strainsArr.slice(0, 4)]
-            console.log(stateObj.currentStrains, `currentStrains`)
+    else if (state.currentPoints >= gammaPoints) {
+        if(strainsArr.slice(0,4)>state.currentStrains.length){
+            state.currentStrains = [...strainsArr.slice(0, 4)]
+            console.log(state.currentStrains, `currentStrains`)
             console.log(`gamma enabled`)
         }
     }
     // beta
-    else if (stateObj.currentPoints >= betaPoints) {
-        if(strainsArr.slice(0, 3)>stateObj.currentStrains){
-            stateObj.currentStrains = [...strainsArr.slice(0, 3)]
-            console.log(stateObj.currentStrains, `currentStrains`)
+    else if (state.currentPoints >= betaPoints) {
+        if(strainsArr.slice(0, 3)>state.currentStrains){
+            state.currentStrains = [...strainsArr.slice(0, 3)]
+            console.log(state.currentStrains, `currentStrains`)
             console.log(`beta enabled`)
         }
     }
     //alpha
-    else if (stateObj.currentPoints >= alphaPoints) {
-        if(strainsArr.slice(0, 2).length>stateObj.currentStrains.length){
-            stateObj.currentStrains = [...strainsArr.slice(0, 2)]
-            console.log(stateObj.currentStrains, `currentStrains`)
+    else if (state.currentPoints >= alphaPoints) {
+        if(strainsArr.slice(0, 2).length>state.currentStrains.length){
+            state.currentStrains = [...strainsArr.slice(0, 2)]
+            console.log(state.currentStrains, `currentStrains`)
             console.log(`alpha enabled`)
         }
     } else {
         console.log(`too little points or something went wrong`)
-        console.log(stateObj)
+        console.log(state)
     }
-    createLis(domStrainsList,stateObj.currentStrains,)
-    return stateObj.currentStrains
+    createLis(domStrainsList,state.currentStrains,)
+    // return stateObj.currentStrains
 }
 
 function createLis(parentElement, elementType) {
@@ -585,28 +579,36 @@ function startDropping(){
 function dropElement(elementFunc,type,arr,obj,nameOfClass) {
     const domElement = elementFunc(type,arr,obj,nameOfClass);
     let start
+    let collisionState = false
+    let stateObj
 
     const speed = parseFloat(0.05 * obj[type].speed).toFixed(4);
 
     function step(timestamp) {
+        collision=collisionState
+        stateObj = {...state}
         if (start === undefined) {
             start = timestamp;
         }
         const elapsed = timestamp - start;
 
-        const height = elapsed * speed
+        const height = parseInt(elapsed * speed)
 
         let barHeight = playArea.collisionPoint
         let elementHeight = parseInt(domElement.style.height)
-        let elementToBarCollisionPoint = playArea.height - barHeight + elementHeight
+        let collisionPointBallHeightAdjusted = playArea.height - barHeight + elementHeight
 
-        const barCollisionPoint = gameField.scrollHeight - elementToBarCollisionPoint
-        // console.log(barCollisionPoint,`barcollisionpoint`)
+        const actualCollisionPoint = gameField.scrollHeight - collisionPointBallHeightAdjusted
+        // console.log(actualCollisionPoint,`actualCollisionPoint`)
         domElement.style.top = height + "px";
         
         //checks for collision and increases the score
-        // if (Math.abs(height - barCollisionPoint) < 1) {
-        if (Math.abs(height - barCollisionPoint) < 1) {
+        if (Math.abs(height - actualCollisionPoint) < 1 && (!collision)) {
+
+            // console.log(height,`height`)
+            // console.log(elementHeight,`elementHeight`)
+            // console.log(collisionPointBallHeightAdjusted,`collisionPointBallHeightAdjusted`)
+            // console.log(actualCollisionPoint,`actualcollisionpoint`);
             if (arr.includes("ancestral")) {
                 if (collisionCheck(domElement, bar)) {
                     updateScores(state, type, domElement)
@@ -619,12 +621,17 @@ function dropElement(elementFunc,type,arr,obj,nameOfClass) {
                 }
             }
             updateGameParameters(state)
+            collisionState=true
+            // console.log(Math.abs(height - actualCollisionPoint) < 1 && (!collision))
             setTimeout(()=>domElement.remove(),500)
+            
             }        
-        else if(height<barCollisionPoint+100){
+        else if(height<actualCollisionPoint+elementHeight &&(!stateObj.gameWon && !stateObj.gameLost)){
+            // console.log((!state.gameWon && !state.gameLost))
+            // console.log(`this runs`)
             window.requestAnimationFrame(step);
             }
-        // else if(height>barCollisionPoint){
+        // else if(height>actualCollisionPoint){
         //     window.requestAnimationFrame(step);
         // }
         }
@@ -638,7 +645,13 @@ function updateScores(state,strain,ball) {
     ball.innerText = points
     ball.style.backgroundColor = "green";
     domCurrentPoints.innerText = state.currentPoints
+
 }
+function updateDomScoreDisplay (){
+    domCurrentPoints.innerText = state.currentPoints
+    domCurrentInfections.innerText = state.currentInfections
+}
+
 function updateInfections(state,strain,ball) {
     // const stateObj = { ...state }
     state.currentInfections += strainsObj[strain].damagePoints
@@ -757,10 +770,6 @@ function addLetterToCheatCodeArr(letter){
         console.log(state.cheatCodeArr)
     }
 }
-//event listener to add pressed letter to cheatcode arr
-document.addEventListener("keydown",(e)=>{
-    addLetterToCheatCodeArr(e.code[e.code.length-1].toLowerCase())
-})
 
 //adds list of cheatcodes
 state.cheatcodes.forEach(cheatCode=>{
@@ -768,29 +777,43 @@ state.cheatcodes.forEach(cheatCode=>{
     li.textContent = cheatCode
     document.querySelector(".cheat-codes").appendChild(li)
 })
+
+// EVENT LISTENERS
+document.addEventListener("keydown",(e)=>{
+    addLetterToCheatCodeArr(e.code[e.code.length-1].toLowerCase())
+})
+
+
 //bar controlls
 document.addEventListener("keydown",(e)=>{
     if(e.code==="ArrowLeft"){
         if(parseFloat(bar.style.left)>gameField.clientLeft){
-            bar.style.left=parseFloat(bar.style.left)-(playArea.width/50)+"px"
-        } else if (parseFloat(bar.style.left) < 0) {
+            bar.style.left=parseInt(bar.style.left)-(playArea.width/50)+"px"
+        } else if (parseInt(bar.style.left) < 0) {
             bar.style.left=0+"px"
         }
     }
     else if(e.code==="ArrowRight"){
         if(parseFloat(bar.style.left)+(barObject.width)<gameField.clientWidth){
-            bar.style.left=parseFloat(bar.style.left)+(playArea.width/50)+"px"
+            bar.style.left=parseInt(bar.style.left)+(playArea.width/50)+"px"
+        }
+        if (parseInt(bar.style.width) + parseInt(bar.style.left) > playArea.width) {
+            bar.style.left = parseInt(playArea.width) - parseInt(bar.style.width) + "px";
         }
     }
 })
 
 startBtn.addEventListener("click",()=>{
+    if(!state.gameActive){
+        restartGame();
+        state.gameActive = true
+        startBtn.style.display="none";
+    }
     
 });
 restartBtn.addEventListener("click",()=>{
-    
+    restartGame()
 });
-
 
 //initial params
 function initiatePlayArea (){
@@ -839,6 +862,7 @@ function setDefaultState(){
     state.booster=false,
     state.gameWon=false,
     state.gameLost=false,
+    state.gameActive=false,
     state.cheats= {
         cheatBar:{
             active:null,
@@ -853,9 +877,53 @@ function setDefaultState(){
 }
 
 function goalCheck(){
+    
+
     if(state.currentPoints>=state.goalPoints || state.currentInfections>=state.goalPoints){
-        let display = state.currentPoints>state.currentInfections ? `Congrats, you controlled the spread` : `Too much time partying - should have focused on the pandemic`
+        let display, ratio
+        state.gameActive = false
+
+        state.currentPoints>state.currentInfections ? (
+            state.gameWon=true
+        ) 
+        : (
+            display = `Too much time partying - should have focused on the pandemic`
+        )
+        ratio = `controlled infections ${state.currentPoints} : uncontrolled infections ${state.currentInfections}}`
         alert(display)
+        alert(ratio)
     }
+}
+function eliminateAllDropingElements(){
+    clearInterval(intervalsObj.mask)
+    clearInterval(intervalsObj.lockdown)
+    clearInterval(intervalsObj.vaccine)
+
+    const balls = document.querySelectorAll(".ball")
+    const powerUps =document.querySelectorAll(".power-up")
+
+    powerUps.forEach(element=>element.remove())
+    balls.forEach(element=>element.remove())
+}
+
+function removeListItemsFromDOM(){
+    removeListItems(domStrainsList)
+    removeListItems(domPowerUpsList)
+}
+
+function removeListItems(parent){
+    const children = Array.from(parent.children)
+    children.forEach(child=>child.remove())
+}
+function restartGame(){
+    eliminateAllDropingElements()
+    setDefaultState()
+    initiatePlayArea();
+    initiateBar();
+    initiateCrowd();
+    removeListItemsFromDOM()
+    state.gameActive = true
+    startDropping()
+    updateGameParameters(state)
 }
 // startDropping()
