@@ -10,6 +10,10 @@ const domJabsList = document.querySelector(".jabs-list");
 const domCurrentPoints = document.querySelector(".points");
 const domCurrentInfections = document.querySelector(".infections");
 
+const startBtn = document.querySelector(".start")
+const restartBtn = document.querySelector(".restart")
+
+
 //PLAYAREA PARAMS
 const playArea = {
     //"px" needs to be added when used
@@ -24,15 +28,16 @@ const barObject = {
     left:playArea.width/2-(playArea.width/20),
 }
 //MAIN GAME STATE
-const state = {
+let state = {
     highscore:null,
     currentPoints: 0,
     currentInfections:0,
-    population:6850,
+    goalPoints:10000,
     cheatcodes:["ienjoycheating","fairplayforall","iwantmyfreedom","doitfortheteam","iwantitovernow"],
     cheatCodeArr: [],
     currentStrains: ["ancestral"],
     currentPowerUps: [],
+    currentJabsList:[],
     collectedJabs: [],
     collectedPowerUps: [],
     emergencyStop:false,
@@ -57,6 +62,7 @@ const state = {
         }
     },
 }
+
 
 //DROPABLE ITEMS STATE AND PARAMS
 const strainsObj = {
@@ -132,19 +138,19 @@ const powerUpsObj = {
         bonusPointsPercent: 20,
         barWidthPercent: 35,
         powerUpDuration: 30000,
-        treshold:4000,
+        treshold:2500,
     },
     double: {
         bonusPointsPercent: 30,
         barWidthPercent: 40,
         powerUpDuration: 20000,
-        treshold:6000,
+        treshold:4000,
     },
     booster: {
         bonusPointsPercent: 50,
         barWidthPercent: 45,
         powerUpDuration: 15000,
-        treshold:9000,
+        treshold:6000,
     },
 }
 //OPTIONS
@@ -171,13 +177,19 @@ function startGame() {
     initiateBar();
     initiateCrowd();
     updateGameParameters(state)
+    setDefaultState()
 }
 startGame()
 
 
 //POWERUP UPDATE FUNCTIONS
 function togglePowerUp(powerUpType){
-    state[powerUpType]=!state[powerUpType]
+    if(state[powerUpType]){
+        state[powerUpType]=!state[powerUpType]
+    }
+    else{
+        console.log(`powerup type`)
+    }
 }
 
 function setPowerUpTimeOut(powerUpType){
@@ -270,34 +282,12 @@ function setVaccineLevel(){
     }
 }
 
+//not in use at the moment
 function toggleClassesHTML(element,htmlListItem){
     return htmlListItem.querySelector(`.${element}`).classList.toggle("active")
 }
 
-//activates cheatBar
-function setCheatBar(){
-    state.cheats.cheatBar.active=true;
-    state.cheats.cheatBar.oldBarWidth=barObject.width
-}
-function clearCheatBar(){
-    state.cheats.cheatBar.active=false;
-}
-function updateCheatBar(){
-    const cheatBar = {...state.cheats.cheatBar}
-    if(cheatBar.active){
-        state.cheats.cheatBar.oldBarWidth = barObject.width
-        barObject.width =setBarWidthRounded(100)
-        bar.style.width = barObject.width + "px"
-        bar.style.left=0+"px"
-        return barObject.width
-    }else if(cheatBar.oldBarWidth){
-        barObject.width=cheatBar.oldBarWidth
-        bar.style.width = barObject.width + "px"
-        state.cheats.cheatBar.oldBarWidth = null;
-        bar.style.left = playArea.width/2 - barObject.width/2 + "px"
-        return barObject.width
-    }
-}
+
 //both functions can be done reusable as they follow lockdown->booster->double->single->mask
 //returns width only to barObject, but does not assign
 function setBarWidthRounded(widthParams) {
@@ -327,8 +317,7 @@ function updateBar() {
             bar.style.left = parseInt(playArea.width) - parseInt(bar.style.width) + "px";
         }
     }
-    
-    return barObject.width
+    // return barObject.width
 }
 //returns updatedPoints
 function addBonusPoints(strain,state,powerUpsObj) {
@@ -380,23 +369,6 @@ function updateIntensity(strain, state) {
     return stateObj.intensity
 }
 
-function recursiveTimeout(stateIntensity) {
-    //dropElement(elementFunc,type,arr,obj,nameOfClass)
-    //createElement = (type,arr,obj,nameOfClass)
-    const strain = randomElementOfArray(state.currentStrains)
-    // dropBall(strain)
-    dropElement(createElement,strain,state.currentStrains,strainsObj,"ball")
-    state.intensity = updateIntensity(strain,state)
-    if(state.emergencyStop){
-        console.log(`emergency stop used: ${stateIntensity}`)
-    }else{
-        console.log(stateIntensity)
-        stateIntensity = state.intensity
-        setTimeout(()=>recursiveTimeout(stateIntensity),stateIntensity)
-    }
-}
-
-
 //state.currentStrains || state.currentPowerUps
 function randomElementOfArray(arr) {
     const index = Math.floor(Math.random() * arr.length)
@@ -412,9 +384,9 @@ function updateGameParameters(stateObj) {
 
 function setPowerUps(state) {
     const stateObj = {...state}
-    const maskPoints = 500
-    const lockdownPoints = 2000
-    const vaccinePoints = 4000
+    const maskPoints = 200
+    const lockdownPoints = 1000
+    const vaccinePoints = 2500
     //vaccine
     if (stateObj.currentPoints >= vaccinePoints) {
         if (powerUpsArr.length > stateObj.currentPowerUps.length) {
@@ -486,15 +458,16 @@ function setJabs(state) {
         console.log(`too little points or something went wrong`)
         console.log(stateObj)
     }
+    createLis(domJabsList,stateObj.currentJabsList,)
     return stateObj.maxJabs
 }
 function setStrains(state) {
     const stateObj = { ...state }
-    const alphaPoints = 1000;
-    const betaPoints = 2000;
-    const gammaPoints = 4000;
-    const deltaPoints = 5000;
-    const omicronPoints = 8000;
+    const alphaPoints = 500;
+    const betaPoints = 1000;
+    const gammaPoints = 2000;
+    const deltaPoints = 3000;
+    const omicronPoints = 5000;
     //omicron
     if (stateObj.currentPoints >= omicronPoints) {
         if(strainsArr.length>stateObj.currentStrains.length){
@@ -584,28 +557,14 @@ function createElement(type,arr,obj,nameOfClass) {
     
 }
 
-function recursiveTimeout(stateIntensity) {
-    //dropElement(elementFunc,type,arr,obj,nameOfClass)
-    //createElement = (type,arr,obj,nameOfClass)
-    const strain = randomElementOfArray(state.currentStrains)
-    // dropBall(strain)
-    dropElement(createElement,strain,state.currentStrains,strainsObj,"ball")
-    state.intensity = updateIntensity(strain,state)
-    if(state.emergencyStop){
-        console.log(`emergency stop used: ${stateIntensity}`)
-    }else{
-        console.log(stateIntensity)
-        stateIntensity = state.intensity
-        setTimeout(()=>recursiveTimeout(stateIntensity),stateIntensity)
-    }
-}
 
-function reqAnimationDelay(stateIntensity){
-    const strain = randomElementOfArray(state.currentStrains)
-
+//need to rename
+function startDropping(){   
     let start, nextDrop
 
     function spawn(timestamp){
+        const strain = randomElementOfArray(state.currentStrains)
+        stateObj = {...state}
         if(!start){
             start = timestamp
         }
@@ -615,18 +574,11 @@ function reqAnimationDelay(stateIntensity){
         timepassed = timestamp - start
 
         if(timepassed>nextDrop){
-            nextDrop=timepassed+state.intensity
-            dropElement(createElement,strain,state.currentStrains,strainsObj,"ball")
-            state=state
-            if(state.intensity<400){
-                state.intensity=400
-            }
+            nextDrop=timepassed+stateObj.intensity
+            dropElement(createElement,strain,stateObj.currentStrains,strainsObj,"ball")
         }
-        
-        
-        
     //condition to continue
-        if(!state.gameWon||!state.gameLost){
+        if(!state.gameWon&&!state.gameLost){
             requestAnimationFrame(spawn)
         }
     }
@@ -638,7 +590,7 @@ function reqAnimationDelay(stateIntensity){
 function dropElement(elementFunc,type,arr,obj,nameOfClass) {
     const domElement = elementFunc(type,arr,obj,nameOfClass);
     let start
-    //needs to be refactored for element
+
     const speed = parseFloat(0.05 * obj[type].speed).toFixed(4);
 
     function step(timestamp) {
@@ -649,15 +601,10 @@ function dropElement(elementFunc,type,arr,obj,nameOfClass) {
 
         const height = elapsed * speed
 
-        //need to rename to collisionPoint
         let barHeight = playArea.collisionPoint
         let elementHeight = parseInt(domElement.style.height)
-        //ball height
         let elementToBarCollisionPoint = playArea.height - barHeight + elementHeight
-        // console.log(elementToBarCollisionPoint,`elementToBarCollisionPoint`)
-        // let elementToBarCollisionPoint = parseInt(playArea.height - barHeight + elementHeight);
-        //ball to bar collision point offset by ball height
-        //level at which the actual collision point is between bar and ball offset by its height
+
         const barCollisionPoint = gameField.scrollHeight - elementToBarCollisionPoint
         // console.log(barCollisionPoint,`barcollisionpoint`)
         domElement.style.top = height + "px";
@@ -701,7 +648,6 @@ function updateInfections(state,strain,ball) {
     domCurrentInfections.innerText = state.currentInfections
 }
 
-
 function collisionCheck (element,bar){
     const elementLocation = {
         left:element.offsetLeft,
@@ -716,6 +662,31 @@ function collisionCheck (element,bar){
     return withinBar
 }
 
+//CHEATCODES
+//activates cheatBar
+function setCheatBar(){
+    state.cheats.cheatBar.active=true;
+    state.cheats.cheatBar.oldBarWidth=barObject.width
+}
+function clearCheatBar(){
+    state.cheats.cheatBar.active=false;
+}
+function updateCheatBar(){
+    const cheatBar = {...state.cheats.cheatBar}
+    if(cheatBar.active){
+        state.cheats.cheatBar.oldBarWidth = barObject.width
+        barObject.width =setBarWidthRounded(100)
+        bar.style.width = barObject.width + "px"
+        bar.style.left=0+"px"
+        return barObject.width
+    }else if(cheatBar.oldBarWidth){
+        barObject.width=cheatBar.oldBarWidth
+        bar.style.width = barObject.width + "px"
+        state.cheats.cheatBar.oldBarWidth = null;
+        bar.style.left = playArea.width/2 - barObject.width/2 + "px"
+        return barObject.width
+    }
+}
 function executeCheatCode(cheatcode){
     console.log(cheatcode)
     switch(cheatcode){
@@ -760,9 +731,6 @@ function iwantitovernow(){
     //display win screen
 }
 
-//NEEDTOREMOVECONSOLELOG
-//
-//adds pressedbutton to cheat arr
 function addLetterToCheatCodeArr(letter){
     if(state.cheatCodeArr.length<14){
         //adds letter to the array
@@ -801,7 +769,31 @@ state.cheatcodes.forEach(cheatCode=>{
     li.textContent = cheatCode
     document.querySelector(".cheat-codes").appendChild(li)
 })
+//bar controlls
+document.addEventListener("keydown",(e)=>{
+    if(e.code==="ArrowLeft"){
+        if(parseFloat(bar.style.left)>gameField.clientLeft){
+            bar.style.left=parseFloat(bar.style.left)-(playArea.width/50)+"px"
+        } else if (parseFloat(bar.style.left) < 0) {
+            bar.style.left=0+"px"
+        }
+    }
+    else if(e.code==="ArrowRight"){
+        if(parseFloat(bar.style.left)+(barObject.width)<gameField.clientWidth){
+            bar.style.left=parseFloat(bar.style.left)+(playArea.width/50)+"px"
+        }
+    }
+})
 
+startBtn.addEventListener("click",()=>{
+    
+});
+restartBtn.addEventListener("click",()=>{
+    
+});
+
+
+//initial params
 function initiatePlayArea (){
     const gameField = document.querySelector(".game-field");
     playArea.height = gameField.scrollHeight,
@@ -827,21 +819,43 @@ function initiateCrowd() {
     crowdLevel.style.height = playArea.height - playArea.collisionPoint + "px";
     return crowdLevel
 }
-
-//bar controlls
-document.addEventListener("keydown",(e)=>{
-    if(e.code==="ArrowLeft"){
-        if(parseFloat(bar.style.left)>gameField.clientLeft){
-            bar.style.left=parseFloat(bar.style.left)-(playArea.width/50)+"px"
-        } else if (parseFloat(bar.style.left) < 0) {
-            bar.style.left=0+"px"
+function setDefaultState(){
+    state.highscore=null,
+    state.currentPoints= 0,
+    state.currentInfections=0,
+    state.population=6850,
+    state.cheatcodes=["ienjoycheating","fairplayforall","iwantmyfreedom","doitfortheteam","iwantitovernow"],
+    state.cheatCodeArr= [],
+    state.currentStrains= ["ancestral"],
+    state.currentPowerUps= [],
+    state.collectedJabs= [],
+    state.collectedPowerUps= [],
+    state.emergencyStop=false,
+    state.maxJabs= 0,
+    state.intensity=1000,
+    state.mask=false,
+    state.lockdown=false,
+    state.single=false,
+    state.double=false,
+    state.booster=false,
+    state.gameWon=false,
+    state.gameLost=false,
+    state.cheats= {
+        cheatBar:{
+            active:null,
+            oldBarWidth:null,
+        },
+        powerUps:{
+            empty:[],
+            default:["mask", "lockdown", "vaccine"],
+            old:[]
         }
     }
-    else if(e.code==="ArrowRight"){
-        if(parseFloat(bar.style.left)+(barObject.width)<gameField.clientWidth){
-            bar.style.left=parseFloat(bar.style.left)+(playArea.width/50)+"px"
-        }
-    }
-})
+}
 
-// recursiveTimeout()
+function goalCheck(){
+    if(state.currentPoints>=state.goalPoints || state.currentInfections>=state.goalPoints){
+        let display = state.currentPoints>state.currentInfections ? `Congrats, you controlled the spread` : `Too much time partying - should have focused on the pandemic`
+        alert(display)
+    }
+}
