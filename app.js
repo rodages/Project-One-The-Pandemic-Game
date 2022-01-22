@@ -28,7 +28,7 @@ const barObject = {
     left:playArea.width/2-(playArea.width/20),
 }
 //MAIN GAME STATE
-let state = {
+const state = {
     highscore:null,
     currentPoints: 0,
     currentInfections:0,
@@ -184,12 +184,7 @@ startGame()
 
 //POWERUP UPDATE FUNCTIONS
 function togglePowerUp(powerUpType){
-    if(state[powerUpType]){
-        state[powerUpType]=!state[powerUpType]
-    }
-    else{
-        console.log(`powerup type`)
-    }
+    state[powerUpType]=!state[powerUpType]
 }
 
 function setPowerUpTimeOut(powerUpType){
@@ -610,6 +605,7 @@ function dropElement(elementFunc,type,arr,obj,nameOfClass) {
         domElement.style.top = height + "px";
         
         //checks for collision and increases the score
+        // if (Math.abs(height - barCollisionPoint) < 1) {
         if (Math.abs(height - barCollisionPoint) < 1) {
             if (arr.includes("ancestral")) {
                 if (collisionCheck(domElement, bar)) {
@@ -625,9 +621,12 @@ function dropElement(elementFunc,type,arr,obj,nameOfClass) {
             updateGameParameters(state)
             setTimeout(()=>domElement.remove(),500)
             }        
-        else if(height<barCollisionPoint){
+        else if(height<barCollisionPoint+100){
             window.requestAnimationFrame(step);
             }
+        // else if(height>barCollisionPoint){
+        //     window.requestAnimationFrame(step);
+        // }
         }
     window.requestAnimationFrame(step)
 }
@@ -859,3 +858,4 @@ function goalCheck(){
         alert(display)
     }
 }
+// startDropping()
