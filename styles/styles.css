@@ -47,7 +47,7 @@ h1{
     width:100%;
     background-image:url('../crowd-crop.png');
     background-position-x: -10px;
-    background-color:grey;
+    background-color:#404040;
     /* height:10%; */
     /* border:1px solid greenyellow; */
 }
