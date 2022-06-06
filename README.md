@@ -6,7 +6,6 @@
   - [Brief](#brief)
   - [Technologies Used](#technologies)
   - [Installation](#installation)
-  - [Demo](#demo)
 - [Development](#development)
   - [Planning](#planning)
   - [Strains](#strains)
@@ -61,19 +60,25 @@ Requirements for the game:
 - Run index.html
 - Show your best decision making skills to survive the pandemic!
 
-### <a name='demo'>Demo</a>
-
-Insert demo capture
+## <a name='development'>Development</a>
 
 **The game can be played [here](https://rodages.github.io/Project-One-The-Pandemic-Game/).**
-
-## <a name='development'>Development</a>
 
 ### <a name='planning'>Planning</a>
 
 ![Sketch](./screenshots/sketch.png "Sketch")
 
-Sketch visualization and the main aspects of the game. Below follows breakdown of the main aspects of the game.
+Sketch visualisation and the main aspects of the game.
+
+The play area would be split into two - the right side to display statistics and information, and the left for the game play area.
+
+The idea is that as with COVID - the game will start slowly, but with every infection appearing - the intensity will increase. The game has limitations on the increase of intensity - as otherwise the screen would get completely spammed with new nodes soon after the start and would not be interesting to play.
+
+When the player collects points by navigating the NHS bar to catch the virus - the game progresses. Each virus strain and each powerup has its own thresholds for appearing in the game. These new features will reward the player with more points if collected or will cause more damage if missed.
+
+The game is played until 10000 points to win or 10000 infections to lose.
+
+Below follows a breakdown of the main aspects of the game.
 
 ### <a name='strains'>Strains</a>
 
@@ -81,7 +86,7 @@ Sketch visualization and the main aspects of the game. Below follows breakdown o
 const strainsArr = ["ancestral", "alpha", "beta", "gamma", "delta", "omicron"]
 ```
 
-Data for strains is listed inside `strainsObj` object. To access it - index for required strain is being passed to `strainsArr`: `strainsObj[strainsArr[index]]`.
+Data for strains is listed inside the `strainsObj` object. To access it - index for required strain is being passed to `strainsArr`: `strainsObj[strainsArr[index]]`.
 
 `strainsObj` has the following details:
 
@@ -98,7 +103,7 @@ const powerUpsArr = ["mask", "lockdown", "vaccine"]
 const jabsList = ["single","double","booster"];
 ```
 
-Data for power-ups is listed inside `powerUpsObj`. To access it - index for required powerup is being passed to `powerUpsArr` :
+Data for power-ups is listed inside the `powerUpsObj`. To access it - index for required powerup is being passed to `powerUpsArr` :
 `powerUpsObj[powerUpsArr[index]]`
 
 - `bonusPointsPercent` - determines by what value collected points are going to be multiplied.
@@ -106,10 +111,10 @@ Data for power-ups is listed inside `powerUpsObj`. To access it - index for requ
 - `speed` - determines how quickly the power-up will be falling compared to standard strain.
 - `size` - determines the size of the power-up compared to the default strain.
 - `enhancements` - classes used for styling only
-- `powerUpDuration` - in ms - determines how long is power-up going to remain active.
-- `reoccurrence` - in ms - determines how frequently is power-up going to appear.
+- `powerUpDuration` - in ms - determines how long is the power-up is going to remain active.
+- `reccurrence` - in ms - determines how frequently power-up is going to appear.
 
-`vaccine` has base parameters of `speed`, `size`, `enhancements`, `reocurrance`, while `bonusPointsPercent`, `barWidthPercent`, `powerUpDuration` and `treshold` stats are listed for different levels of vaccine - `single`, `double`, `booster`.
+`vaccine` has base parameters of `speed`, `size`, `enhancements`, `reocurrance`, while `bonusPointsPercent`, `barWidthPercent`, `powerUpDuration` and `threshold` stats are listed for different levels of vaccine - `single`, `double`, `booster`.
 
 ### <a name='bar'>NHS Bar</a>
 
@@ -129,14 +134,14 @@ const barObject = {
 }
 ```
 
-By default NHS BAR is set to have 1/5 of total gameplay width. It can a have temporary increases by collecting power-ups - the higher level of power-up - the greater the increase. Another way of increasing the width is by using `ienjoycheating` cheat code to permanently increase the bar to maximum gameplay width - it will only shrink to previous size, if `fairplayforall` will get entered.
+By default NHS BAR is set to have a 1/5 of total gameplay width. It can have a temporary increase by collecting power-ups - the higher level of power-up - the greater the increase. Another way of increasing the width is by using `ienjoycheating` cheat code to permanently increase the bar to maximum gameplay width - it will only shrink to previous size, if `fairplayforall` will get entered.
 
 ### <a name='cheat-codes'>Cheat Codes</a>
 
 - `ienjoycheating` - Expands the NHS bar to the maximum width.
 - `fairplayforall` - Brings back the NHS bar to original size.
-- `iwantmyfreedom` - Removes all powerups from the game and allows the virus to spread uncontrollably.
-- `doitfortheteam` - Brings back the powerups.
+- `iwantmyfreedom` - Removes all power-ups from the game and allows the virus to spread uncontrollably.
+- `doitfortheteam` - Brings back the power-ups.
 - `iwantitovernow` - Grants you maximum points to end the game. All you had to do is ask!
 
 ### <a name='styling'>Styling</a>
@@ -158,7 +163,7 @@ All virus strains have different colours and gradients - but after implementing 
 
 ```
 
-Powerups were supposed to be styled to represent actual items, but due to lack of time were just left as square boxes with different colours.
+Power-ups were supposed to be styled to represent actual items, but due to lack of time, they were just left as square boxes with different colours.
 
 ## <a name='difficulties-wins'>Difficulties and Wins</a>
 
@@ -168,7 +173,7 @@ Powerups were supposed to be styled to represent actual items, but due to lack o
 Sometimes, especially if the computer is getting slow, or is overheating - some elements get stuck below the NHS line instead of disappearing from the screen after points collection/damage.
 
 ![Tabs bug](./screenshots/tabsBug.PNG "Bug caused by changing Tabs")
-If the user changes from the tab running the game to another, and comes back to play the game - the newly rendered items are being rendered on top of initial play area and just continue falling down the viewport instead of being cleared once they hit points collection/damage line.
+If the user changes from the tab running the game to another, and comes back to play the game - the newly rendered items are being rendered on top of the initial play area and just continue falling down the viewport instead of being cleared once they hit points collection/damage line.
 
 ### <a name='challenges-wins'>Challenges and Wins</a>
 
@@ -324,11 +329,11 @@ function addLetterToCheatCodeArr(letter){
   - `"fade"` - At the top of the page, the virus would be solid, but would become more transparent when reaching the crowd level. The class would only be active if `lockdown` or `vaccine` powerups were not collected.
   - `"resistant"` - Would make `lockdown` and `vaccine` powerups ineffective.
 
-- At the moment the game only works on Desktop - draggable NHS bar could allow mobile play.
+- At the moment, the game only works on Desktop - draggable NHS bar could allow mobile play.
 
 - Currently the NHS bar just expands and shrinks without any animation - This can lead to some unexpected point drop.
 
-- Implement timer visualization to notify the player of the remaining duration of `powerups`
+- Implement timer visualisation to notify the player of the remaining duration of `powerups`
 
 ## <a name='key-learnings'>Key Learnings</a>
 
@@ -336,12 +341,12 @@ function addLetterToCheatCodeArr(letter){
 
 - I have learned more about DOM manipulation and debugging.
 
-- Project helped me to understand the importance of breaking down code into smaller chunks and splitting it into separate files. It was quite difficult to follow the code at times when had to navigate from top to bottom.
+- Project helped me to understand the importance of breaking down code into smaller chunks and splitting it into separate files. It was quite difficult to follow the code at times when I had to navigate from top to bottom.
 
 - I was really excited about the game and spent a significant amount of time thinking of edge cases, extra features, and even actual statistics and information about COVID strains - this led to a lot of time spent on irrelevant information/buggy features.
 
 - Project worked well with the `setTimeout` function until it scaled to high intensity. `RequestAnimationFrame` allowed the project to function on a high load without lag and taught an important lesson to write efficient code rather than just implementing the first possible solution.
 
-- This was the first project where I had some support from the senior developers. It was a very valuable experience to go through code reviews and improved my ability to talk through code not only write it.
+- This was the first project where I had some support from the senior developers. It was a very valuable experience to go through code reviews and it improved my ability to talk through the code and not only write it.
 
-- Even when I was at work , or doing other activities - I was thinking about the project, features and code - which made me feel happy. As I knew - this is something that I want to do professionally!
+- Even when I was at work, or doing other activities - I was thinking about the project, features and code - which made me feel happy, as I knew - this is something that I am trully passionate about and want to do professionally!
