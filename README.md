@@ -6,6 +6,7 @@
   - [Brief](#brief)
   - [Technologies Used](#technologies)
   - [Installation](#installation)
+  - [Demo](#demo)
 - [Development](#development)
   - [Planning](#planning)
   - [Strains](#strains)
@@ -25,7 +26,7 @@ The first project at General Assembly's (GA) Software Engineering Immersive (SEI
 
 I have decided to create a custom game, rather than recreating the most commonly selected projects - Battleships, Frogger, Pac-Man, Snake, Space-Invaders or Tetris.
 
-The game was developed during the height of the Omicron wave and if hearing about covid all day was not enough - I have chosen it as a subject of the first project.
+The game was developed during the height of the Omicron wave and if hearing about COVID all day was not enough - I have chosen it as a subject of the first project.
 
 The aim of the game is to protect as much population from COVID by navigating the NHS bar with `left` and `right` arrows.
 
@@ -60,15 +61,47 @@ Requirements for the game:
 - Run index.html
 - Show your best decision making skills to survive the pandemic!
 
-## <a name='development'>Development</a>
+### <a name='demo'>Demo</a>
+
+Insert demo capture
 
 **The game can be played [here](https://rodages.github.io/Project-One-The-Pandemic-Game/).**
+
+## <a name='development'>Development</a>
 
 ### <a name='planning'>Planning</a>
 
 ![Sketch](./screenshots/sketch.png "Sketch")
 
 Sketch visualisation and the main aspects of the game.
+
+The first few days were spent on planning, writing the state parameters, choosing the cheat codes' functionality/names and implementing the skeleton HTML layout.
+
+The plan was to have basic functionality complete by the beginning of the first week:
+
+- virus nodes should be able to fall and appear randomly.
+- the bar should register when the virus lands within its width.
+- score or infections should get increased depending on where the virus lands.
+
+The first component to function properly was the NHS bar, however, at that point, it did not have any styling. I had some issues with the bar going out from the game area, but luckily the issues were quickly resolved.
+
+The second aspect of the game that was completed - cheat codes - Although it was a stretch goal, I was very passionate about this functionality for reasons explained in the `wins` section.
+
+Initially, the virus object was initialised as a `ball` and even till now some components and styles are named misleadingly. This was the third working part, where I falsely believed that the project was finished as it only required minor upgrades.
+
+By the end of the first week I had completed my base MVP, but the game was lagging a lot and had very basic styling. The instructor suggested reading about `requestAnimationFrame`, which was a big game-changer to make the game playable. The code was refactored and further stretch goals were worked on.
+
+The second week was focused on planning the thresholds for different strains, and powerups and fixing the bugs that came with each implementation of a new feature.
+
+Firstly I have spent more time on styling. This helped differentiate different virus strains and made the game look much better and enjoyable, although the game has not been finished styling even until now.
+
+With more advanced styling in place, I have implemented different virus strains.
+
+Most of the week has been spent on working and fixing bugs that came together with implementing the powerups. I was considering adding additional cheat code granting `n` amount of points - hence had to write a lot of code on how to tackle bugs of edge cases of suddenly getting a high increase of extra points rather than going through natural game progression.
+
+On the final days, I was working on tying the cheat codes together with actual gameplay, implementing restart functionality and fixing minor bugs.
+
+### <a name='functionality'>Game Functionality</a>
 
 The play area would be split into two - the right side to display statistics and information, and the left for the game play area.
 
@@ -86,7 +119,7 @@ Below follows a breakdown of the main aspects of the game.
 const strainsArr = ["ancestral", "alpha", "beta", "gamma", "delta", "omicron"]
 ```
 
-Data for strains is listed inside the `strainsObj` object. To access it - index for required strain is being passed to `strainsArr`: `strainsObj[strainsArr[index]]`.
+Data for strains is listed inside `strainsObj` object. To access it - index for required strain is being passed to `strainsArr`: `strainsObj[strainsArr[index]]`.
 
 `strainsObj` has the following details:
 
@@ -103,18 +136,18 @@ const powerUpsArr = ["mask", "lockdown", "vaccine"]
 const jabsList = ["single","double","booster"];
 ```
 
-Data for power-ups is listed inside the `powerUpsObj`. To access it - index for required powerup is being passed to `powerUpsArr` :
+Data for power-ups is listed inside `powerUpsObj`. To access it - index for required powerup is being passed to `powerUpsArr` :
 `powerUpsObj[powerUpsArr[index]]`
 
-- `bonusPointsPercent` - determines by what value collected points are going to be multiplied.
-- `barWidthPercent` - determines the percentage by which the standard game bar would get increased. The game does not combine power-ups but rather increases the width based on the "strongest" power-up
+- `bonusPointsPercent` - a value by which regular points are going to be multiplied..
+- `barWidthPercent` - determines the percentage by which the standard game bar would get increased. The game does not combine power-ups but rather increases the width based on the "strongest" power-up.
 - `speed` - determines how quickly the power-up will be falling compared to standard strain.
 - `size` - determines the size of the power-up compared to the default strain.
 - `enhancements` - classes used for styling only
-- `powerUpDuration` - in ms - determines how long is the power-up is going to remain active.
-- `reccurrence` - in ms - determines how frequently power-up is going to appear.
+- `powerUpDuration` - in ms - determines how long the power-up is going to remain active.
+- `recurrence` - in ms - determines how frequently power-ups are going to appear.
 
-`vaccine` has base parameters of `speed`, `size`, `enhancements`, `reocurrance`, while `bonusPointsPercent`, `barWidthPercent`, `powerUpDuration` and `threshold` stats are listed for different levels of vaccine - `single`, `double`, `booster`.
+`vaccine` has base parameters of `speed`, `size`, `enhancements`, `recurrence`, while `bonusPointsPercent`, `barWidthPercent`, `powerUpDuration` and `threshold` stats are listed for different levels of vaccine - `single`, `double`, `booster`.
 
 ### <a name='bar'>NHS Bar</a>
 
@@ -134,14 +167,14 @@ const barObject = {
 }
 ```
 
-By default NHS BAR is set to have a 1/5 of total gameplay width. It can have a temporary increase by collecting power-ups - the higher level of power-up - the greater the increase. Another way of increasing the width is by using `ienjoycheating` cheat code to permanently increase the bar to maximum gameplay width - it will only shrink to previous size, if `fairplayforall` will get entered.
+By default NHS BAR is set to have 1/5 of total gameplay width. It can temporarily increase by collecting power-ups - the higher level of power-up - the greater the increase. Another way of increasing the width is by using `ienjoycheating` cheat code to permanently increase the bar to maximum gameplay width - it will only shrink to previous size, if `fairplayforall` will get entered.
 
 ### <a name='cheat-codes'>Cheat Codes</a>
 
 - `ienjoycheating` - Expands the NHS bar to the maximum width.
 - `fairplayforall` - Brings back the NHS bar to original size.
-- `iwantmyfreedom` - Removes all power-ups from the game and allows the virus to spread uncontrollably.
-- `doitfortheteam` - Brings back the power-ups.
+- `iwantmyfreedom` - Removes all powerups from the game and allows the virus to spread uncontrollably.
+- `doitfortheteam` - Brings back the powerups.
 - `iwantitovernow` - Grants you maximum points to end the game. All you had to do is ask!
 
 ### <a name='styling'>Styling</a>
@@ -163,9 +196,9 @@ All virus strains have different colours and gradients - but after implementing 
 
 ```
 
-Power-ups were supposed to be styled to represent actual items, but due to lack of time, they were just left as square boxes with different colours.
+Power Ups were supposed to be styled to represent actual items, but due to lack of time were just left as square boxes with different colours.
 
-## <a name='difficulties-wins'>Difficulties and Wins</a>
+## <a name=bugs-wins'>Bugs and Wins</a>
 
 ### <a name='bugs'>Known Bugs</a>
 
@@ -176,6 +209,8 @@ Sometimes, especially if the computer is getting slow, or is overheating - some 
 If the user changes from the tab running the game to another, and comes back to play the game - the newly rendered items are being rendered on top of the initial play area and just continue falling down the viewport instead of being cleared once they hit points collection/damage line.
 
 ### <a name='challenges-wins'>Challenges and Wins</a>
+
+The project has lots of state and parameters that change as the game progresses. I believe that is quite a big accomplishment for a first project as most beginner games focus only on a few moving pieces.
 
 ```
 const state = {
@@ -216,7 +251,7 @@ const state = {
 
 ```
 
-The project has lots of state and parameters that change as the game progresses. I believe that is quite a big accomplishment for a first project as most beginner games focus only on a few moving pieces.
+`window.requestAnnimationFrame` allowed to have smooth virus/powerup drops throughout the application at scale. Before refactoring the code and using `setTimeout` - the computer would overheat easily as soon as lots of nodes would appear on the screen.
 
 ```
 function startDropping(){
@@ -246,7 +281,7 @@ function startDropping(){
 }
 ```
 
-`window.requestAnnimationFrame` allowed to have smooth virus/powerup drops throughout the application at scale. Before refactoring the code and using `setTimeout` - the computer would overheat easily as soon as lots of nodes would appear on the screen.
+Depending on currently selected powerups and the virus strain that is about to be dropped - the game regulates the intensity at which the upcoming drop will happen again.
 
 ```
 function updateIntensity(strain, state) {
@@ -281,7 +316,7 @@ function updateIntensity(strain, state) {
 }
 ```
 
-Depending on currently selected powerups and the virus strain that is about to be dropped - the game regulates the intensity at which the upcoming drop will happen again.
+`GTA: Vice City` was the first game where I saw cheat codes available when my friend showed me the game for the first time on his computer. I was very impressed and unfortunately, as I was not very good at the game - I had to use the codes to complete the game. When creating this game - I really wanted to implement the same functionality!
 
 ```
 function addLetterToCheatCodeArr(letter){
@@ -315,8 +350,6 @@ function addLetterToCheatCodeArr(letter){
 
 ```
 
-`GTA: Vice City` was the first game where I saw cheat codes available when my friend showed me the game for the first time on his computer. I was very impressed and unfortunately, as I was not very good at the game - I had to use the codes to complete the game. When creating this game - I really wanted to implement the same functionality!
-
 ## <a name='future-improvements'>Future improvements</a>
 
 - At the moment there are two `requestAnimation
@@ -329,7 +362,7 @@ function addLetterToCheatCodeArr(letter){
   - `"fade"` - At the top of the page, the virus would be solid, but would become more transparent when reaching the crowd level. The class would only be active if `lockdown` or `vaccine` powerups were not collected.
   - `"resistant"` - Would make `lockdown` and `vaccine` powerups ineffective.
 
-- At the moment, the game only works on Desktop - draggable NHS bar could allow mobile play.
+- At the moment the game only works on Desktop - draggable NHS bar could allow mobile play.
 
 - Currently the NHS bar just expands and shrinks without any animation - This can lead to some unexpected point drop.
 
@@ -349,4 +382,4 @@ function addLetterToCheatCodeArr(letter){
 
 - This was the first project where I had some support from the senior developers. It was a very valuable experience to go through code reviews and it improved my ability to talk through the code and not only write it.
 
-- Even when I was at work, or doing other activities - I was thinking about the project, features and code - which made me feel happy, as I knew - this is something that I am trully passionate about and want to do professionally!
+- Even when I was at work, or doing other activities - I was thinking about the project, features and code - which made me feel happy. As I knew - this is something that I want to do professionally!
