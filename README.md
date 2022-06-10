@@ -1,3 +1,4 @@
+
 # ![](https://ga-dash.s3.amazonaws.com/production/assets/logo-9f88ae6c9c3871690e33280fcf557f33.png) GA London SEI Project-1-The Pandemic Game
 
 ## TABLE OF CONTENTS
@@ -78,7 +79,6 @@ Sketch visualisation and the main aspects of the game.
 The first few days were spent on planning, writing the state parameters, choosing the cheat codes' functionality/names and implementing the skeleton HTML layout.
 
 The plan was to have basic functionality complete by the beginning of the first week:
-
 - virus nodes should be able to fall and appear randomly.
 - the bar should register when the virus lands within its width.
 - score or infections should get increased depending on where the virus lands.
@@ -93,16 +93,16 @@ By the end of the first week I had completed my base MVP, but the game was laggi
 
 The second week was focused on planning the thresholds for different strains, and powerups and fixing the bugs that came with each implementation of a new feature.
 
-Firstly I have spent more time on styling. This helped differentiate different virus strains and made the game look much better and enjoyable, although the game has not been finished styling even until now.
+Firstly I spent more time on styling. This helped differentiate different virus strains and made the game look much better and enjoyable, although the game has not been finished styling even until now.
 
-With more advanced styling in place, I have implemented different virus strains.
+With more advanced styling in place, I implemented different virus strains.
 
-Most of the week has been spent on working and fixing bugs that came together with implementing the powerups. I was considering adding additional cheat code granting `n` amount of points - hence had to write a lot of code on how to tackle bugs of edge cases of suddenly getting a high increase of extra points rather than going through natural game progression.
+Most of the week was spent on working and fixing bugs that came together with implementing the powerups. I was considering adding additional cheat code granting `n` amount of points - hence I had to write a lot of code on how to tackle bugs of edge cases of suddenly getting a high increase of extra points rather than going through natural game progression.
 
 On the final days, I was working on tying the cheat codes together with actual gameplay, implementing restart functionality and fixing minor bugs.
 
-### <a name='functionality'>Game Functionality</a>
 
+### <a name='functionality'>Game Functionality</a>
 The play area would be split into two - the right side to display statistics and information, and the left for the game play area.
 
 The idea is that as with COVID - the game will start slowly, but with every infection appearing - the intensity will increase. The game has limitations on the increase of intensity - as otherwise the screen would get completely spammed with new nodes soon after the start and would not be interesting to play.
@@ -211,7 +211,6 @@ If the user changes from the tab running the game to another, and comes back to 
 ### <a name='challenges-wins'>Challenges and Wins</a>
 
 The project has lots of state and parameters that change as the game progresses. I believe that is quite a big accomplishment for a first project as most beginner games focus only on a few moving pieces.
-
 ```
 const state = {
     highscore:null,
@@ -253,6 +252,7 @@ const state = {
 
 `window.requestAnnimationFrame` allowed to have smooth virus/powerup drops throughout the application at scale. Before refactoring the code and using `setTimeout` - the computer would overheat easily as soon as lots of nodes would appear on the screen.
 
+
 ```
 function startDropping(){
     let start, nextDrop
@@ -280,8 +280,8 @@ function startDropping(){
     window.requestAnimationFrame(spawn)
 }
 ```
-
 Depending on currently selected powerups and the virus strain that is about to be dropped - the game regulates the intensity at which the upcoming drop will happen again.
+
 
 ```
 function updateIntensity(strain, state) {
@@ -315,8 +315,8 @@ function updateIntensity(strain, state) {
     return stateObj.intensity
 }
 ```
-
 `GTA: Vice City` was the first game where I saw cheat codes available when my friend showed me the game for the first time on his computer. I was very impressed and unfortunately, as I was not very good at the game - I had to use the codes to complete the game. When creating this game - I really wanted to implement the same functionality!
+
 
 ```
 function addLetterToCheatCodeArr(letter){
@@ -349,6 +349,7 @@ function addLetterToCheatCodeArr(letter){
 
 
 ```
+
 
 ## <a name='future-improvements'>Future improvements</a>
 
