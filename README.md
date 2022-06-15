@@ -198,7 +198,7 @@ All virus strains have different colours and gradients - but after implementing 
 
 Power Ups were supposed to be styled to represent actual items, but due to lack of time were just left as square boxes with different colours.
 
-## <a name=bugs-wins'>Bugs and Wins</a>
+## <a name='bugs-wins'>Bugs and Wins</a>
 
 ### <a name='bugs'>Known Bugs</a>
 
